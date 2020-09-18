@@ -18,7 +18,7 @@
 <template>
   <div class="home-page-main layout vertical center">
     <div><img alt="Vue logo" src="../../assets/logo.png" /></div>
-    <hello-world ref="helloWorld" class="hello-world" msg="Welcome to Your Vue 2 + Composition API" />
+    <hello-world ref="helloWorld" class="hello-world" msg="Welcome to Your Vue2 + Composition API" />
   </div>
 </template>
 

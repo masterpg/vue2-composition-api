@@ -75,6 +75,7 @@
 import { computed, defineComponent, onMounted, reactive, ref, watch, watchEffect } from '@vue/composition-api'
 import { GreetMessage } from '@/views/abc/greet-message.vue'
 import { Screen } from 'quasar'
+import { useI18n } from '@/i18n'
 
 interface AbcPageProps {
   propA: string
@@ -110,6 +111,7 @@ export default defineComponent<AbcPageProps>({
       customInputValue: '',
       customChecked: false,
     })
+    const { t, d } = useI18n()
 
     const greetMessage = ref<GreetMessage>()
 

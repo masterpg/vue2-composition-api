@@ -48,14 +48,14 @@
   <div class="shop-page layout vertical">
     <div>
       <div class="layout horizontal center">
-        <div class="title-text">{{ $t('products') }}</div>
+        <div class="title-text">{{ t('shop.products') }}</div>
       </div>
       <hr style="width: 100%;" />
       <div v-for="product in products" :key="product.id" class="layout horizontal center product-item">
         <div class="layout vertical center-justified">
           <div class="title">{{ product.title }}</div>
           <div class="detail">
-            <span>{{ $t('price') }}:</span> ¥{{ product.price }}&nbsp;/&nbsp;<span>{{ $t('stock') }}:</span>
+            <span>{{ t('shop.price') }}:</span> ¥{{ product.price }}&nbsp;/&nbsp;<span>{{ t('shop.stock') }}:</span>
             {{ product.stock }}
           </div>
         </div>
@@ -66,7 +66,7 @@
 
     <div v-show="!cartIsEmpty" class="app-mt-20">
       <div class="layout horizontal center">
-        <div class="title-text">{{ $t('yourCurt') }}</div>
+        <div class="title-text">{{ t('shop.yourCurt') }}</div>
         <div class="flex-1"></div>
       </div>
       <hr style="width: 100%;" />
@@ -74,7 +74,7 @@
         <div class="layout vertical center-justified">
           <div class="title">{{ cartItem.title }}</div>
           <div class="detail">
-            <span>{{ $t('price') }}:</span> ¥{{ cartItem.price }} x {{ cartItem.quantity }}
+            <span>{{ t('shop.price') }}:</span> ¥{{ cartItem.price }} x {{ cartItem.quantity }}
           </div>
         </div>
         <div class="flex-1"></div>
@@ -84,7 +84,7 @@
 
     <div v-show="!cartIsEmpty" class="app-mt-20">
       <div class="layout horizontal center">
-        <div class="title-text">{{ $t('total') }}</div>
+        <div class="title-text">{{ t('shop.total') }}</div>
         <div class="flex-1"></div>
       </div>
       <hr style="width: 100%;" />
@@ -93,7 +93,7 @@
           <div class="detail">¥{{ cartTotalPrice }}</div>
         </div>
         <div class="error-text flex-1">{{ checkoutStatus.message }}</div>
-        <q-btn v-show="!cartIsEmpty" :label="$t('checkout')" color="primary" @click="checkoutButtonOnClick" />
+        <q-btn v-show="!cartIsEmpty" :label="t('shop.checkout')" color="primary" @click="checkoutButtonOnClick" />
       </div>
     </div>
   </div>
@@ -103,6 +103,7 @@
 import { CartItem, CheckoutStatus, LogicContainerKey, Product } from '@/logic'
 import { computed, defineComponent, inject, onMounted, reactive, ref } from '@vue/composition-api'
 import { Loading } from 'quasar'
+import { useI18n } from '@/i18n'
 
 interface ShopPageProps {}
 
@@ -112,6 +113,7 @@ export default defineComponent<ShopPageProps>({
   setup(props, context) {
     const state = reactive({})
     const logic = inject(LogicContainerKey)!
+    const { t, tc } = useI18n()
 
     //----------------------------------------------------------------------
     //
@@ -186,26 +188,8 @@ export default defineComponent<ShopPageProps>({
       addButtonOnClick,
       removeButtonOnClick,
       checkoutButtonOnClick,
+      t,
     }
   },
 })
 </script>
-
-<i18n>
-en:
-  products: "Products"
-  yourCurt: "Your Curt"
-  price: "Price"
-  stock: "Stock"
-  total: "Total"
-  totalAmount: "Total Amount"
-  checkout: "Checkout"
-ja:
-  products: "商品一覧"
-  yourCurt: "あなたのカート"
-  price: "価格"
-  stock: "在庫"
-  total: "合計"
-  totalAmount: "合計金額"
-  checkout: "チェックアウト"
-</i18n>

@@ -5,22 +5,21 @@ import '@/registerServiceWorker'
 import AppPage from '@/index.vue'
 import Vue from 'vue'
 import VueCompositionApi from '@vue/composition-api'
-import VueI18n from 'vue-i18n'
-import { dateTimeFormats } from '@/i18n/date-time-formats'
+import { createI18n } from '@/i18n'
 import router from '@/router'
 
 Vue.config.productionTip = false
 
 Vue.use(VueCompositionApi)
-Vue.use(VueI18n)
 
-const i18n = new VueI18n({
-  locale: 'ja',
-  dateTimeFormats,
-})
+async function init() {
+  const i18n = createI18n()
+  await i18n.load()
 
-new Vue({
-  router,
-  i18n,
-  render: h => h(AppPage),
-}).$mount('#app')
+  new Vue({
+    router,
+    i18n: i18n.core,
+    render: h => h(AppPage),
+  }).$mount('#app')
+}
+init()
