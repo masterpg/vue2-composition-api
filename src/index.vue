@@ -72,7 +72,7 @@ export default defineComponent({
       pages: [
         {
           title: 'Home',
-          path: '/',
+          path: '/home',
         },
         {
           title: 'ABC',
