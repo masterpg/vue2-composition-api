@@ -113,7 +113,7 @@ export default defineComponent<ShopPageProps>({
   setup(props, context) {
     const state = reactive({})
     const logic = inject(LogicContainerKey)!
-    const { t, tc } = useI18n()
+    const { t } = useI18n()
 
     //----------------------------------------------------------------------
     //

@@ -18,7 +18,7 @@ async function init() {
 
   new Vue({
     router,
-    i18n: i18n.core,
+    i18n,
     render: h => h(AppPage),
   }).$mount('#app')
 }
