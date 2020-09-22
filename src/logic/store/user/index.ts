@@ -1,7 +1,7 @@
-import { computed, reactive } from '@vue/composition-api'
 import { DeepReadonly } from 'web-base-lib'
 import { User } from '@/logic/types'
 import dayjs from 'dayjs'
+import { reactive } from '@vue/composition-api'
 
 //========================================================================
 //
@@ -9,14 +9,11 @@ import dayjs from 'dayjs'
 //
 //========================================================================
 
-interface UserStore extends DeepReadonly<User> {
+interface UserStore {
+  value: DeepReadonly<User>
   set(user: User): void
   clear(): void
   clone(source: User): User
-}
-
-interface UserState {
-  user: User
 }
 
 //========================================================================
@@ -25,34 +22,25 @@ interface UserState {
 //
 //========================================================================
 
-// namespace UserStore {
-//   export function clone(source: User): User {
-//     return populate(source, {})
-//   }
-//
-//   export function populate(from: Partial<User>, to: Partial<User>): User {
-//     if (typeof from.id === 'string') to.id = from.id
-//     if (typeof from.email === 'string') to.email = from.email
-//     if (typeof from.displayName === 'string') to.displayName = from.displayName
-//     if (from.createdAt) to.createdAt = dayjs(from.createdAt)
-//     if (from.updatedAt) to.updatedAt = dayjs(from.updatedAt)
-//     return to as User
-//   }
-// }
+function createEmptyState(): User {
+  return {
+    id: '',
+    email: '',
+    displayName: '',
+    createdAt: dayjs(0),
+    updatedAt: dayjs(0),
+  }
+}
 
 function createUserStore(): UserStore {
-  const createEmptyState = () => {
-    return {
-      id: '',
-      email: '',
-      displayName: '',
-      createdAt: dayjs(0),
-      updatedAt: dayjs(0),
-    } as User
-  }
+  //----------------------------------------------------------------------
+  //
+  //  Variables
+  //
+  //----------------------------------------------------------------------
 
-  const state = reactive<UserState>({
-    user: createEmptyState(),
+  const state = reactive({
+    value: createEmptyState(),
   })
 
   //----------------------------------------------------------------------
@@ -62,7 +50,7 @@ function createUserStore(): UserStore {
   //----------------------------------------------------------------------
 
   const set: UserStore['set'] = user => {
-    populate(user, state.user)
+    populate(user, state.value)
   }
 
   const clear: UserStore['clear'] = () => {
@@ -95,11 +83,7 @@ function createUserStore(): UserStore {
   //----------------------------------------------------------------------
 
   return {
-    id: computed(() => state.user.id) as any,
-    email: computed(() => state.user.email) as any,
-    displayName: computed(() => state.user.displayName) as any,
-    createdAt: computed(() => state.user.createdAt) as any,
-    updatedAt: computed(() => state.user.updatedAt) as any,
+    value: state.value,
     set,
     clear,
     clone,

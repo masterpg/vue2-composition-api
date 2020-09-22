@@ -1,9 +1,9 @@
-import { computed, inject } from '@vue/composition-api'
+import { ComputedRef } from '@vue/composition-api'
 import { DeepReadonly } from 'web-base-lib'
-import { InternalLogicKey } from '@/logic/modules/internal'
-import { StoreContainerKey } from '@/logic/store'
 import { TestData } from '@/logic/test-data'
 import { User } from '@/logic/types'
+import { injectInternalLogic } from '@/logic/modules/internal'
+import { injectStore } from '@/logic/store'
 
 //========================================================================
 //
@@ -14,11 +14,13 @@ import { User } from '@/logic/types'
 interface AuthLogic {
   readonly user: DeepReadonly<User>
 
-  readonly isSignedIn: boolean
+  readonly isSignedIn: ComputedRef<boolean>
 
   signIn(): Promise<void>
 
   signOut(): Promise<void>
+
+  validateSignedIn(): void
 }
 
 //========================================================================
@@ -28,16 +30,14 @@ interface AuthLogic {
 //========================================================================
 
 function createAuthLogic(): AuthLogic {
-  const internal = inject(InternalLogicKey)!
-  const store = inject(StoreContainerKey)!
-
   //----------------------------------------------------------------------
   //
-  //  Properties
+  //  Variables
   //
   //----------------------------------------------------------------------
 
-  const isSignIn = computed(() => internal.auth.isSignedIn.value)
+  const internal = injectInternalLogic()
+  const store = injectStore()
 
   //----------------------------------------------------------------------
   //
@@ -60,6 +60,8 @@ function createAuthLogic(): AuthLogic {
     store.cart.setAll([])
   }
 
+  const validateSignedIn = internal.auth.validateSignedIn
+
   //----------------------------------------------------------------------
   //
   //  Result
@@ -67,10 +69,11 @@ function createAuthLogic(): AuthLogic {
   //----------------------------------------------------------------------
 
   return {
-    user: store.user,
-    isSignedIn: isSignIn as any,
+    user: store.user.value,
+    isSignedIn: internal.auth.isSignedIn,
     signIn,
     signOut,
+    validateSignedIn,
   }
 }
 

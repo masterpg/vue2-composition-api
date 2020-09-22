@@ -1,5 +1,6 @@
 import { CartItem, CheckoutStatus } from '@/logic/types'
-import { computed, reactive } from '@vue/composition-api'
+import { ComputedRef, computed, reactive } from '@vue/composition-api'
+import { DeepReadonly } from 'web-base-lib'
 import { StatePartial } from '@/logic/store/base'
 import dayjs from 'dayjs'
 
@@ -10,11 +11,11 @@ import dayjs from 'dayjs'
 //========================================================================
 
 interface CartStore {
-  readonly all: CartItem[]
+  readonly all: DeepReadonly<CartItem>[]
 
-  readonly totalPrice: number
+  readonly totalPrice: ComputedRef<number>
 
-  readonly checkoutStatus: CheckoutStatus
+  readonly checkoutStatus: ComputedRef<CheckoutStatus>
 
   getById(cartItemId: string): CartItem | undefined
 
@@ -39,38 +40,21 @@ interface CartStore {
   clone(source: CartItem): CartItem
 }
 
-interface CartState {
-  all: CartItem[]
-  checkoutStatus: CheckoutStatus
-}
-
 //========================================================================
 //
 //  Implementation
 //
 //========================================================================
 
-// namespace CartStore {
-//   export function clone(source: CartItem): CartItem {
-//     return populate(source, {})
-//   }
-//
-//   export function populate(from: Partial<CartItem>, to: Partial<CartItem>): CartItem {
-//     if (typeof from.id === 'string') to.id = from.id
-//     if (typeof from.uid === 'string') to.uid = from.uid
-//     if (typeof from.productId === 'string') to.productId = from.productId
-//     if (typeof from.title === 'string') to.title = from.title
-//     if (typeof from.price === 'number') to.price = from.price
-//     if (typeof from.quantity === 'number') to.quantity = from.quantity
-//     if (from.createdAt) to.createdAt = dayjs(from.createdAt)
-//     if (from.updatedAt) to.updatedAt = dayjs(from.updatedAt)
-//     return to as CartItem
-//   }
-// }
-
 function createCartStore(): CartStore {
-  const state = reactive<CartState>({
-    all: [],
+  //----------------------------------------------------------------------
+  //
+  //  Variables
+  //
+  //----------------------------------------------------------------------
+
+  const state = reactive({
+    all: [] as CartItem[],
     checkoutStatus: CheckoutStatus.None,
   })
 
@@ -204,8 +188,8 @@ function createCartStore(): CartStore {
 
   return {
     all: state.all,
-    checkoutStatus: checkoutStatus as any,
-    totalPrice: totalPrice as any,
+    checkoutStatus,
+    totalPrice,
     getById,
     sgetById,
     getByProductId,

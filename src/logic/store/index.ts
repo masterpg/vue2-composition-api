@@ -1,5 +1,5 @@
 import { CartStore, createCartStore } from '@/logic/store/cart'
-import { InjectionKey, reactive } from '@vue/composition-api'
+import { InjectionKey, inject, provide } from '@vue/composition-api'
 import { ProductStore, createProductStore } from '@/logic/store/product'
 import { UserStore, createUserStore } from '@/logic/store/user'
 
@@ -21,21 +21,31 @@ interface StoreContainer {
 //
 //========================================================================
 
-function createStoreContainer(): StoreContainer {
-  const state = reactive({
+const StoreKey: InjectionKey<StoreContainer> = Symbol('Store')
+
+function createStore(): StoreContainer {
+  return {
     user: createUserStore(),
     product: createProductStore(),
     cart: createCartStore(),
-  })
-
-  return {
-    user: state.user,
-    product: state.product,
-    cart: state.cart,
   }
 }
 
-const StoreContainerKey: InjectionKey<StoreContainer> = Symbol('StoreContainer')
+function provideStore(): void {
+  provide(StoreKey, createStore())
+}
+
+function injectStore(): StoreContainer {
+  validateStoreProvided()
+  return inject(StoreKey)!
+}
+
+function validateStoreProvided(): void {
+  const result = inject(StoreKey)
+  if (!result) {
+    throw new Error(`${StoreKey} is not provided`)
+  }
+}
 
 //========================================================================
 //
@@ -43,4 +53,4 @@ const StoreContainerKey: InjectionKey<StoreContainer> = Symbol('StoreContainer')
 //
 //========================================================================
 
-export { StoreContainerKey, createStoreContainer }
+export { StoreContainer, StoreKey, provideStore, injectStore, validateStoreProvided }

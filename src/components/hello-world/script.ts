@@ -1,12 +1,12 @@
 import { SetupContext } from '@vue/composition-api'
 
 interface HelloWorldProps {
-  msg: string
+  title: string
 }
 
 function setupHelloWorld(props: HelloWorldProps, context: SetupContext) {
   const hello = () => {
-    console.log(`Hello World!`)
+    return `Hello World! ${props.title}.`
   }
 
   return {

@@ -19,7 +19,8 @@ interface AppI18n extends VueI18n {
   load(locale?: VueI18n.Locale): Promise<void>
 }
 
-interface AppI18nMembers {
+interface AppI18nFuncs {
+  i18n: AppI18n
   t: VueI18n['t']
   tc: VueI18n['tc']
   te: VueI18n['te']
@@ -266,32 +267,32 @@ function createI18n(): AppI18n {
   return appI18n
 }
 
-function useI18n(): AppI18nMembers {
+function useI18n(): AppI18nFuncs {
   if (!appI18n) {
     throw new Error(`An instance of VueI18n has not been created.`)
   }
 
-  const t: AppI18nMembers['t'] = (key: VueI18n.Path, ...values: any) => {
+  const t: AppI18nFuncs['t'] = (key: VueI18n.Path, ...values: any) => {
     return appI18n.t(key, ...values)
   }
 
-  const tc: AppI18nMembers['tc'] = (key: VueI18n.Path, choice?: number, ...values: any) => {
+  const tc: AppI18nFuncs['tc'] = (key: VueI18n.Path, choice?: number, ...values: any) => {
     return appI18n.tc(key, choice, ...values)
   }
 
-  const te: AppI18nMembers['te'] = (key: VueI18n.Path, locale?: VueI18n.Locale) => {
+  const te: AppI18nFuncs['te'] = (key: VueI18n.Path, locale?: VueI18n.Locale) => {
     return appI18n.te(key, locale)
   }
 
-  const d: AppI18nMembers['d'] = (value: number | Date, ...args: any) => {
+  const d: AppI18nFuncs['d'] = (value: number | Date, ...args: any) => {
     return appI18n.d(value, ...args)
   }
 
-  const n: AppI18nMembers['n'] = (value: number, ...args: any) => {
+  const n: AppI18nFuncs['n'] = (value: number, ...args: any) => {
     return appI18n.n(value, ...args)
   }
 
-  return { t, tc, te, d, n }
+  return { i18n: appI18n, t, tc, te, d, n }
 }
 
 //========================================================================
@@ -300,4 +301,4 @@ function useI18n(): AppI18nMembers {
 //
 //========================================================================
 
-export { createI18n, useI18n }
+export { AppI18n, createI18n, useI18n }

@@ -1,5 +1,5 @@
-import { InjectionKey, WritableComputedRef, computed, inject, reactive } from '@vue/composition-api'
-import { StoreContainerKey } from '@/logic/store'
+import { InjectionKey, WritableComputedRef, computed, inject, provide, reactive } from '@vue/composition-api'
+import { injectStore } from '@/logic/store'
 
 //========================================================================
 //
@@ -16,7 +16,9 @@ interface InternalLogic {
     validateSignedIn(): void
   }
 }
+
 type HelperLogic = InternalLogic['helper']
+
 type AuthLogic = InternalLogic['auth']
 
 //========================================================================
@@ -25,7 +27,11 @@ type AuthLogic = InternalLogic['auth']
 //
 //========================================================================
 
-function createHelperLogic(): HelperLogic {
+//--------------------------------------------------
+//  HelperLogic
+//--------------------------------------------------
+
+function createInternalHelperLogic(): HelperLogic {
   const generateId: HelperLogic['generateId'] = () => {
     const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
     let autoId = ''
@@ -40,12 +46,16 @@ function createHelperLogic(): HelperLogic {
   }
 }
 
-function createAuthLogic(): AuthLogic {
+//--------------------------------------------------
+//  AuthLogic
+//--------------------------------------------------
+
+function createInternalAuthLogic(): AuthLogic {
+  const store = injectStore()
+
   const state = reactive({
     isSignedIn: false,
   })
-
-  const store = inject(StoreContainerKey)!
 
   const isSignedIn = computed<boolean>({
     get: () => state.isSignedIn,
@@ -59,19 +69,39 @@ function createAuthLogic(): AuthLogic {
   }
 
   return {
-    isSignedIn: isSignedIn,
+    isSignedIn,
     validateSignedIn,
   }
 }
 
+//--------------------------------------------------
+//  Others
+//--------------------------------------------------
+
+const InternalLogicKey: InjectionKey<InternalLogic> = Symbol('InternalLogic')
+
 function createInternalLogic(): InternalLogic {
   return {
-    helper: createHelperLogic(),
-    auth: createAuthLogic(),
+    helper: createInternalHelperLogic(),
+    auth: createInternalAuthLogic(),
   }
 }
 
-const InternalLogicKey: InjectionKey<InternalLogic> = Symbol('InternalLogic')
+function provideInternalLogic(): void {
+  provide(InternalLogicKey, createInternalLogic())
+}
+
+function injectInternalLogic(): InternalLogic {
+  validateInternalLogicProvided()
+  return inject(InternalLogicKey)!
+}
+
+function validateInternalLogicProvided(): void {
+  const result = inject(InternalLogicKey)
+  if (!result) {
+    throw new Error(`${InternalLogicKey} is not provided`)
+  }
+}
 
 //========================================================================
 //
@@ -79,4 +109,12 @@ const InternalLogicKey: InjectionKey<InternalLogic> = Symbol('InternalLogic')
 //
 //========================================================================
 
-export { InternalLogicKey, createInternalLogic }
+export {
+  InternalLogic,
+  InternalLogicKey,
+  provideInternalLogic,
+  injectInternalLogic,
+  validateInternalLogicProvided,
+  createInternalAuthLogic,
+  createInternalHelperLogic,
+}

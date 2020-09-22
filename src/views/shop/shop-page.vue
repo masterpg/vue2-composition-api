@@ -51,7 +51,7 @@
         <div class="title-text">{{ t('shop.products') }}</div>
       </div>
       <hr style="width: 100%;" />
-      <div v-for="product in products" :key="product.id" class="layout horizontal center product-item">
+      <div v-for="product in state.products" :key="product.id" class="layout horizontal center product-item">
         <div class="layout vertical center-justified">
           <div class="title">{{ product.title }}</div>
           <div class="detail">
@@ -60,17 +60,17 @@
           </div>
         </div>
         <div class="flex-1"></div>
-        <q-btn v-show="isSignedIn" round color="primary" size="xs" icon="add" @click="addButtonOnClick(product)" />
+        <q-btn v-show="state.isSignedIn" round color="primary" size="xs" icon="add" @click="addButtonOnClick(product)" />
       </div>
     </div>
 
-    <div v-show="!cartIsEmpty" class="app-mt-20">
+    <div v-show="!state.cartIsEmpty" class="app-mt-20">
       <div class="layout horizontal center">
         <div class="title-text">{{ t('shop.yourCurt') }}</div>
         <div class="flex-1"></div>
       </div>
       <hr style="width: 100%;" />
-      <div v-for="cartItem in cartItems" :key="cartItem.id" class="layout horizontal center cart-item">
+      <div v-for="cartItem in state.cartItems" :key="cartItem.id" class="layout horizontal center cart-item">
         <div class="layout vertical center-justified">
           <div class="title">{{ cartItem.title }}</div>
           <div class="detail">
@@ -82,7 +82,7 @@
       </div>
     </div>
 
-    <div v-show="!cartIsEmpty" class="app-mt-20">
+    <div v-show="!state.cartIsEmpty" class="app-mt-20">
       <div class="layout horizontal center">
         <div class="title-text">{{ t('shop.total') }}</div>
         <div class="flex-1"></div>
@@ -90,18 +90,18 @@
       <hr style="width: 100%;" />
       <div class="layout horizontal center">
         <div class="total-amount layout horizontal center">
-          <div class="detail">¥{{ cartTotalPrice }}</div>
+          <div class="detail">¥{{ state.cartTotalPrice }}</div>
         </div>
-        <div class="error-text flex-1">{{ checkoutStatus.message }}</div>
-        <q-btn v-show="!cartIsEmpty" :label="t('shop.checkout')" color="primary" @click="checkoutButtonOnClick" />
+        <div class="error-text flex-1">{{ state.checkoutMessage }}</div>
+        <q-btn v-show="!state.cartIsEmpty" :label="t('shop.checkout')" color="primary" @click="checkoutButtonOnClick" />
       </div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { CartItem, CheckoutStatus, LogicContainerKey, Product } from '@/logic'
-import { computed, defineComponent, inject, onMounted, reactive, ref } from '@vue/composition-api'
+import { CartItem, CheckoutStatus, Product, injectLogic } from '@/logic'
+import { computed, defineComponent, onMounted, reactive } from '@vue/composition-api'
 import { Loading } from 'quasar'
 import { useI18n } from '@/i18n'
 
@@ -111,9 +111,38 @@ export default defineComponent<ShopPageProps>({
   name: 'ShopPage',
 
   setup(props, context) {
-    const state = reactive({})
-    const logic = inject(LogicContainerKey)!
+    //----------------------------------------------------------------------
+    //
+    //  Variables
+    //
+    //----------------------------------------------------------------------
+
+    const logic = injectLogic()
     const { t } = useI18n()
+
+    // @ts-ignore
+    // TS7022: 'state' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.
+    const state = reactive({
+      isSignedIn: logic.auth.isSignedIn,
+
+      products: logic.shop.products,
+
+      cartItems: logic.shop.cartItems,
+
+      cartTotalPrice: logic.shop.cartTotalPrice,
+
+      cartIsEmpty: computed<boolean>(() => {
+        return state.cartItems.length === 0
+      }),
+
+      checkoutStatus: logic.shop.checkoutStatus,
+
+      checkoutMessage: computed<string>(() => {
+        const checkoutStatus = state.checkoutStatus
+        const checkoutResult = checkoutStatus === CheckoutStatus.None || checkoutStatus === CheckoutStatus.Successful
+        return checkoutResult ? '' : 'Checkout failed.'
+      }),
+    })
 
     //----------------------------------------------------------------------
     //
@@ -123,29 +152,6 @@ export default defineComponent<ShopPageProps>({
 
     onMounted(async () => {
       await logic.shop.fetchProducts()
-    })
-
-    //----------------------------------------------------------------------
-    //
-    //  Variables
-    //
-    //----------------------------------------------------------------------
-
-    const isSignedIn = computed(() => logic.auth.isSignedIn)
-
-    const cartIsEmpty = computed<boolean>(() => {
-      return logic.shop.cartItems.length === 0
-    })
-
-    const cartTotalPrice = computed(() => logic.shop.cartTotalPrice)
-
-    const checkoutStatus = computed<{ result: boolean; message: string }>(() => {
-      const checkoutStatus = logic.shop.checkoutStatus
-      const result = checkoutStatus === CheckoutStatus.None || checkoutStatus === CheckoutStatus.Successful
-      return {
-        result,
-        message: result ? '' : 'Checkout failed.',
-      }
     })
 
     //----------------------------------------------------------------------
@@ -179,16 +185,11 @@ export default defineComponent<ShopPageProps>({
     //----------------------------------------------------------------------
 
     return {
-      products: logic.shop.products,
-      cartItems: logic.shop.cartItems,
-      isSignedIn,
-      cartTotalPrice,
-      cartIsEmpty,
-      checkoutStatus,
+      t,
+      state,
       addButtonOnClick,
       removeButtonOnClick,
       checkoutButtonOnClick,
-      t,
     }
   },
 })

@@ -24,17 +24,17 @@
           Vue2 Composition API
         </q-toolbar-title>
 
-        <div v-show="isSignedIn" class="app-mr-16">{{ user.displayName }}</div>
+        <div v-show="state.isSignedIn" class="app-mr-16">{{ state.user.displayName }}</div>
         <div class="app-mr-16">Quasar v{{ $q.version }}</div>
 
         <q-btn flat round dense color="white" icon="more_vert">
           <q-menu>
             <q-list class="menu-list">
-              <q-item v-show="!isSignedIn" v-close-popup clickable>
-                <q-item-section @click="signInMenuItemOnClick">サインイン</q-item-section>
+              <q-item v-show="!state.isSignedIn" v-close-popup clickable>
+                <q-item-section @click="signInMenuItemOnClick">{{ t('common.signIn') }}</q-item-section>
               </q-item>
-              <q-item v-show="isSignedIn" v-close-popup clickable>
-                <q-item-section @click="signOutMenuItemOnClick">サインアウト</q-item-section>
+              <q-item v-show="state.isSignedIn" v-close-popup clickable>
+                <q-item-section @click="signOutMenuItemOnClick">{{ t('common.signOut') }}</q-item-section>
               </q-item>
             </q-list>
           </q-menu>
@@ -61,14 +61,27 @@
 </template>
 
 <script lang="ts">
-import { LogicContainerKey, createLogicContainer } from '@/logic'
-import { computed, defineComponent, inject, provide, reactive } from '@vue/composition-api'
+import { defineComponent, reactive } from '@vue/composition-api'
+import { injectLogic, provideLogic } from '@/logic'
 import { Platform } from 'quasar'
+import { useI18n } from '@/i18n'
 
 export default defineComponent({
   setup() {
+    //----------------------------------------------------------------------
+    //
+    //  Variables
+    //
+    //----------------------------------------------------------------------
+
+    provideLogic()
+
+    const logic = injectLogic()
+    const { t } = useI18n()
+
     const state = reactive({
       leftDrawerOpen: Platform.is.desktop,
+
       pages: [
         {
           title: 'Home',
@@ -83,11 +96,17 @@ export default defineComponent({
           path: '/shop',
         },
       ] as { title: string; path: string }[],
-    })
-    provide(LogicContainerKey, createLogicContainer())
-    const logic = inject(LogicContainerKey)!
 
-    const isSignedIn = computed(() => logic.auth.isSignedIn)
+      isSignedIn: logic.auth.isSignedIn,
+
+      user: logic.auth.user,
+    })
+
+    //----------------------------------------------------------------------
+    //
+    //  Event listeners
+    //
+    //----------------------------------------------------------------------
 
     function signInMenuItemOnClick() {
       logic.auth.signIn()
@@ -97,10 +116,15 @@ export default defineComponent({
       logic.auth.signOut()
     }
 
+    //----------------------------------------------------------------------
+    //
+    //  Result
+    //
+    //----------------------------------------------------------------------
+
     return {
+      t,
       state,
-      isSignedIn,
-      user: logic.auth.user,
       signInMenuItemOnClick,
       signOutMenuItemOnClick,
     }

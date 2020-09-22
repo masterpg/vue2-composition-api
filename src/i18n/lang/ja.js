@@ -1,4 +1,12 @@
 export default {
+  common: {
+    signIn: 'サインイン',
+    signOut: 'サインアウト',
+  },
+  abc: {
+    hello: 'こんにちは、{name}さん。',
+    today: '今日は {date} です。',
+  },
   shop: {
     products: '商品一覧',
     yourCurt: 'あなたのカート',

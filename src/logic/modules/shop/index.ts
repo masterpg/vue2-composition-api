@@ -1,10 +1,10 @@
 import { CartItem, CheckoutStatus, Product } from '@/logic/types'
-import { computed, inject } from '@vue/composition-api'
+import { ComputedRef } from '@vue/composition-api'
 import { DeepReadonly } from 'web-base-lib'
-import { InternalLogicKey } from '@/logic/modules/internal'
-import { StoreContainerKey } from '@/logic/store'
 import { TestData } from '@/logic/test-data'
 import dayjs from 'dayjs'
+import { injectInternalLogic } from '@/logic/modules/internal'
+import { injectStore } from '@/logic/store'
 
 //========================================================================
 //
@@ -17,9 +17,9 @@ interface ShopLogic {
 
   readonly cartItems: DeepReadonly<CartItem>[]
 
-  readonly cartTotalPrice: number
+  readonly cartTotalPrice: ComputedRef<number>
 
-  checkoutStatus: CheckoutStatus
+  checkoutStatus: ComputedRef<CheckoutStatus>
 
   fetchProducts(): Promise<Product[]>
 
@@ -39,18 +39,14 @@ interface ShopLogic {
 //========================================================================
 
 function createShopLogic(): ShopLogic {
-  const internal = inject(InternalLogicKey)!
-  const store = inject(StoreContainerKey)!
-
   //----------------------------------------------------------------------
   //
-  //  Properties
+  //  Variables
   //
   //----------------------------------------------------------------------
 
-  const checkoutStatus = computed(() => store.cart.checkoutStatus)
-
-  const cartTotalPrice = computed(() => store.cart.totalPrice)
+  const internal = injectInternalLogic()
+  const store = injectStore()
 
   //----------------------------------------------------------------------
   //
@@ -153,7 +149,7 @@ function createShopLogic(): ShopLogic {
     const apiResponse = {
       ...newCartItem,
       id: internal.helper.generateId(),
-      uid: store.user.id,
+      uid: store.user.value.id,
       createdAt: now,
       updatedAt: now,
       product: {
@@ -219,8 +215,8 @@ function createShopLogic(): ShopLogic {
   return {
     products: store.product.all,
     cartItems: store.cart.all,
-    checkoutStatus: checkoutStatus as any,
-    cartTotalPrice: cartTotalPrice as any,
+    checkoutStatus: store.cart.checkoutStatus,
+    cartTotalPrice: store.cart.totalPrice,
     fetchProducts,
     fetchCartItems,
     addItemToCart,

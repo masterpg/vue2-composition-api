@@ -1,16 +1,20 @@
 import '@/styles/app.sass'
 
-import '@/quasar'
 import '@/registerServiceWorker'
 import AppPage from '@/index.vue'
 import Vue from 'vue'
 import VueCompositionApi from '@vue/composition-api'
 import { createI18n } from '@/i18n'
+import { quasar } from '@/quasar'
 import router from '@/router'
 
+// Vueの設定
 Vue.config.productionTip = false
-
 Vue.use(VueCompositionApi)
+
+// Quasarの設定
+quasar.setup()
+quasar.setupExtras()
 
 async function init() {
   const i18n = createI18n()

@@ -30,35 +30,21 @@ interface ProductStore {
   clone(source: Product): Product
 }
 
-interface ProductState {
-  all: Product[]
-}
-
 //========================================================================
 //
 //  Implementation
 //
 //========================================================================
 
-// namespace ProductStore {
-//   export function clone(source: Product): Product {
-//     return populate(source, {})
-//   }
-//
-//   export function populate(from: Partial<Product>, to: Partial<Product>): Product {
-//     if (typeof from.id === 'string') to.id = from.id
-//     if (typeof from.title === 'string') to.title = from.title
-//     if (typeof from.price === 'number') to.price = from.price
-//     if (typeof from.stock === 'number') to.stock = from.stock
-//     if (from.createdAt) to.createdAt = dayjs(from.createdAt)
-//     if (from.updatedAt) to.updatedAt = dayjs(from.updatedAt)
-//     return to as Product
-//   }
-// }
-
 function createProductStore(): ProductStore {
-  const state = reactive<ProductState>({
-    all: [],
+  //----------------------------------------------------------------------
+  //
+  //  Variables
+  //
+  //----------------------------------------------------------------------
+
+  const state = reactive({
+    all: [] as Product[],
   })
 
   //----------------------------------------------------------------------

@@ -1,8 +1,8 @@
 import { AuthLogic, createAuthLogic } from '@/logic/modules/auth'
-import { InjectionKey, provide, reactive } from '@vue/composition-api'
-import { InternalLogicKey, createInternalLogic } from '@/logic/modules/internal'
+import { InjectionKey, inject, provide } from '@vue/composition-api'
 import { ShopLogic, createShopLogic } from '@/logic/modules/shop'
-import { StoreContainerKey, createStoreContainer } from '@/logic/store'
+import { provideInternalLogic } from '@/logic/modules/internal'
+import { provideStore } from '@/logic/store'
 
 //========================================================================
 //
@@ -11,8 +11,8 @@ import { StoreContainerKey, createStoreContainer } from '@/logic/store'
 //========================================================================
 
 interface LogicContainer {
-  readonly shop: ShopLogic
   readonly auth: AuthLogic
+  readonly shop: ShopLogic
 }
 
 //========================================================================
@@ -21,22 +21,32 @@ interface LogicContainer {
 //
 //========================================================================
 
-function createLogicContainer(): LogicContainer {
-  provide(StoreContainerKey, createStoreContainer())
-  provide(InternalLogicKey, createInternalLogic())
+const LogicKey: InjectionKey<LogicContainer> = Symbol('Logic')
 
-  const state = reactive({
-    shop: createShopLogic(),
-    auth: createAuthLogic(),
-  })
-
+function createLogic(): LogicContainer {
   return {
-    shop: state.shop,
-    auth: state.auth,
+    auth: createAuthLogic(),
+    shop: createShopLogic(),
   }
 }
 
-const LogicContainerKey: InjectionKey<LogicContainer> = Symbol('LogicContainer')
+function provideLogic(): void {
+  provideStore()
+  provideInternalLogic()
+  provide(LogicKey, createLogic())
+}
+
+function injectLogic(): LogicContainer {
+  validateLogicProvided()
+  return inject(LogicKey)!
+}
+
+function validateLogicProvided(): void {
+  const result = inject(LogicKey)
+  if (!result) {
+    throw new Error(`${LogicKey} is not provided`)
+  }
+}
 
 //========================================================================
 //
@@ -45,4 +55,5 @@ const LogicContainerKey: InjectionKey<LogicContainer> = Symbol('LogicContainer')
 //========================================================================
 
 export * from '@/logic/types'
-export { LogicContainerKey, createLogicContainer }
+export { provideStore } from '@/logic/store'
+export { LogicContainer, LogicKey, provideLogic, injectLogic, validateLogicProvided }
