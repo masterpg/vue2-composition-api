@@ -17,9 +17,9 @@ interface InternalLogic {
   }
 }
 
-type HelperLogic = InternalLogic['helper']
+type InternalHelperLogic = InternalLogic['helper']
 
-type AuthLogic = InternalLogic['auth']
+type InternalAuthLogic = InternalLogic['auth']
 
 //========================================================================
 //
@@ -28,11 +28,11 @@ type AuthLogic = InternalLogic['auth']
 //========================================================================
 
 //--------------------------------------------------
-//  HelperLogic
+//  InternalHelperLogic
 //--------------------------------------------------
 
-function createInternalHelperLogic(): HelperLogic {
-  const generateId: HelperLogic['generateId'] = () => {
+function createInternalHelperLogic(): InternalHelperLogic {
+  const generateId: InternalHelperLogic['generateId'] = () => {
     const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
     let autoId = ''
     for (let i = 0; i < 20; i++) {
@@ -47,10 +47,10 @@ function createInternalHelperLogic(): HelperLogic {
 }
 
 //--------------------------------------------------
-//  AuthLogic
+//  InternalAuthLogic
 //--------------------------------------------------
 
-function createInternalAuthLogic(): AuthLogic {
+function createInternalAuthLogic(): InternalAuthLogic {
   const store = injectStore()
 
   const state = reactive({
@@ -62,7 +62,7 @@ function createInternalAuthLogic(): AuthLogic {
     set: value => (state.isSignedIn = value),
   })
 
-  const validateSignedIn: AuthLogic['validateSignedIn'] = () => {
+  const validateSignedIn: InternalAuthLogic['validateSignedIn'] = () => {
     if (!state.isSignedIn) {
       throw new Error(`The application is not yet signed in.`)
     }
@@ -110,11 +110,13 @@ function validateInternalLogicProvided(): void {
 //========================================================================
 
 export {
+  InternalAuthLogic,
+  InternalHelperLogic,
   InternalLogic,
   InternalLogicKey,
-  provideInternalLogic,
-  injectInternalLogic,
-  validateInternalLogicProvided,
   createInternalAuthLogic,
   createInternalHelperLogic,
+  injectInternalLogic,
+  provideInternalLogic,
+  validateInternalLogicProvided,
 }

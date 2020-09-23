@@ -14,6 +14,8 @@ function setupHelloWorld(props: HelloWorldProps, context: SetupContext) {
   }
 }
 
-type HelloWorld = ReturnType<typeof setupHelloWorld>
+type HelloWorldFuncs = ReturnType<typeof setupHelloWorld>
 
-export { HelloWorldProps, HelloWorld, setupHelloWorld }
+type HelloWorld = HelloWorldFuncs & Vue
+
+export { HelloWorld, HelloWorldProps, HelloWorldFuncs, setupHelloWorld }
