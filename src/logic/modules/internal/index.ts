@@ -97,9 +97,9 @@ function injectInternalLogic(): InternalLogic {
 }
 
 function validateInternalLogicProvided(): void {
-  const result = inject(InternalLogicKey)
-  if (!result) {
-    throw new Error(`${InternalLogicKey} is not provided`)
+  const value = inject(InternalLogicKey)
+  if (!value) {
+    throw new Error(`${InternalLogicKey.description} is not provided`)
   }
 }
 

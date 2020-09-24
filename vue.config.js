@@ -1,5 +1,5 @@
 // ベースURLの設定
-const publicPath = ''
+const publicPath = process.env.VUE_APP_BASE_URL
 
 // 各エントリーポイントの設定
 const pages = {
@@ -43,5 +43,11 @@ module.exports = {
       .use('yaml')
       .loader('yaml-loader')
       .end()
+  },
+
+  devServer: {
+    port: 5030,
+    host: '0.0.0.0',
+    disableHostCheck: true,
   },
 }

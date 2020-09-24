@@ -42,9 +42,9 @@ function injectLogic(): LogicContainer {
 }
 
 function validateLogicProvided(): void {
-  const result = inject(LogicKey)
-  if (!result) {
-    throw new Error(`${LogicKey} is not provided`)
+  const value = inject(LogicKey)
+  if (!value) {
+    throw new Error(`${LogicKey.description} is not provided`)
   }
 }
 

@@ -64,6 +64,7 @@
 import { defineComponent, reactive } from '@vue/composition-api'
 import { injectLogic, provideLogic } from '@/logic'
 import { Platform } from 'quasar'
+import { provideConfig } from '@/config'
 import { useI18n } from '@/i18n'
 
 export default defineComponent({
@@ -74,6 +75,7 @@ export default defineComponent({
     //
     //----------------------------------------------------------------------
 
+    provideConfig()
     provideLogic()
 
     const logic = injectLogic()

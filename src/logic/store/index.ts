@@ -41,9 +41,9 @@ function injectStore(): StoreContainer {
 }
 
 function validateStoreProvided(): void {
-  const result = inject(StoreKey)
-  if (!result) {
-    throw new Error(`${StoreKey} is not provided`)
+  const value = inject(StoreKey)
+  if (!value) {
+    throw new Error(`${StoreKey.description} is not provided`)
   }
 }
 
