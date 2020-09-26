@@ -1,8 +1,7 @@
-import { CartItem, CheckoutStatus, Product } from '@/logic/types'
-import { ComputedRef } from '@vue/composition-api'
+import { CartItem, Product } from '@/logic/types'
+import { ComputedRef, watch } from '@vue/composition-api'
 import { DeepReadonly } from 'web-base-lib'
-import { TestData } from '@/logic/test-data'
-import dayjs from 'dayjs'
+import { injectAPI } from '@/logic/api'
 import { injectInternalLogic } from '@/logic/modules/internal'
 import { injectStore } from '@/logic/store'
 
@@ -19,11 +18,9 @@ interface ShopLogic {
 
   readonly cartTotalPrice: ComputedRef<number>
 
-  checkoutStatus: ComputedRef<CheckoutStatus>
+  fetchProducts(): Promise<DeepReadonly<Product>[]>
 
-  fetchProducts(): Promise<Product[]>
-
-  fetchCartItems(): Promise<CartItem[]>
+  fetchCartItems(): Promise<DeepReadonly<CartItem>[]>
 
   addItemToCart(productId: string): Promise<void>
 
@@ -45,6 +42,7 @@ function createShopLogic(): ShopLogic {
   //
   //----------------------------------------------------------------------
 
+  const api = injectAPI()
   const internal = injectInternalLogic()
   const store = injectStore()
 
@@ -55,17 +53,17 @@ function createShopLogic(): ShopLogic {
   //----------------------------------------------------------------------
 
   const fetchProducts: ShopLogic['fetchProducts'] = async () => {
-    // 本来ならAPIを呼び出すのだが、擬似コードで対応
-    store.product.setAll(TestData.products)
-    return store.product.all.map(product => store.product.clone(product))
+    const products = await api.getProducts()
+    store.product.setAll(products)
+    return store.product.all
   }
 
   const fetchCartItems: ShopLogic['fetchCartItems'] = async () => {
     internal.auth.validateSignedIn()
 
-    // 本来ならAPIを呼び出すのだが、擬似コードで対応
-    store.cart.setAll(TestData.cartItems)
-    return store.cart.all.map(cartItem => store.cart.clone(cartItem))
+    const cartItems = await api.getCartItems()
+    store.cart.setAll(cartItems)
+    return store.cart.all
   }
 
   const addItemToCart: ShopLogic['addItemToCart'] = async productId => {
@@ -77,56 +75,31 @@ function createShopLogic(): ShopLogic {
     }
 
     const cartItem = store.cart.getByProductId(productId)
-
-    try {
-      if (!cartItem) {
-        await addCartItem(productId)
-      } else {
-        await updateCartItem(productId, 1)
-      }
-    } catch (err) {
-      console.error(err)
-      return
+    if (!cartItem) {
+      await addCartItem(productId)
+    } else {
+      await updateCartItem(productId, 1)
     }
-
-    store.cart.setCheckoutStatus(CheckoutStatus.None)
   }
 
   const removeItemFromCart: ShopLogic['removeItemFromCart'] = async productId => {
     internal.auth.validateSignedIn()
 
     const cartItem = store.cart.sgetByProductId(productId)
-
-    try {
-      if (cartItem.quantity > 1) {
-        await updateCartItem(productId, -1)
-      } else {
-        await removeCartItem(productId)
-      }
-    } catch (err) {
-      console.error(err)
-      return
+    if (cartItem.quantity > 1) {
+      await updateCartItem(productId, -1)
+    } else {
+      await removeCartItem(productId)
     }
-
-    store.cart.setCheckoutStatus(CheckoutStatus.None)
   }
 
   const checkout: ShopLogic['checkout'] = async () => {
     internal.auth.validateSignedIn()
 
-    try {
-      // 本来ならここにAPIを呼び出すコードが記述される
-      if (getRandomInt(2) === 0) {
-        throw new Error('Failed to check out.')
-      }
-    } catch (err) {
-      console.log(err)
-      store.cart.setCheckoutStatus(CheckoutStatus.Failed)
-      return
-    }
+    await api.checkoutCart()
 
-    store.cart.setAll([]) // カートを空にする
-    store.cart.setCheckoutStatus(CheckoutStatus.Successful)
+    // カートを空にする
+    store.cart.clear()
   }
 
   //----------------------------------------------------------------------
@@ -143,21 +116,7 @@ function createShopLogic(): ShopLogic {
       price: product.price,
       quantity: 1,
     }
-
-    // 本来ならAPIを呼び出すのだが、擬似コードで対応
-    const now = dayjs()
-    const apiResponse = {
-      ...newCartItem,
-      id: internal.helper.generateId(),
-      uid: store.user.value.id,
-      createdAt: now,
-      updatedAt: now,
-      product: {
-        id: product.id,
-        stock: product.stock - 1,
-      },
-    }
-
+    const apiResponse = (await api.addCartItems([newCartItem]))[0]
     store.product.set(apiResponse.product)
     store.cart.add(apiResponse)
   }
@@ -165,39 +124,17 @@ function createShopLogic(): ShopLogic {
   async function updateCartItem(productId: string, quantity: number): Promise<void> {
     const cartItem = store.cart.sgetByProductId(productId)
     const updateCartItem = {
-      ...cartItem,
+      id: cartItem.id,
       quantity: cartItem.quantity + quantity,
     }
-
-    // 本来ならAPIを呼び出すのだが、擬似コードで対応
-    const product = store.product.sgetById(productId)
-    const now = dayjs()
-    const apiResponse = {
-      ...updateCartItem,
-      updatedAt: now,
-      product: {
-        id: product.id,
-        stock: product.stock - quantity,
-      },
-    }
-
+    const apiResponse = (await api.updateCartItems([updateCartItem]))[0]
     store.product.set(apiResponse.product)
     store.cart.set(apiResponse)
   }
 
   async function removeCartItem(productId: string): Promise<void> {
     const cartItem = store.cart.sgetByProductId(productId)
-
-    // 本来ならAPIを呼び出すのだが、擬似コードで対応
-    const product = store.product.sgetById(productId)
-    const apiResponse = {
-      ...cartItem,
-      product: {
-        id: product.id,
-        stock: product.stock + 1,
-      },
-    }
-
+    const apiResponse = (await api.removeCartItems([cartItem.id]))[0]
     store.product.set(apiResponse.product)
     store.cart.remove(apiResponse.id)
   }
@@ -208,6 +145,27 @@ function createShopLogic(): ShopLogic {
 
   //----------------------------------------------------------------------
   //
+  //  Event listeners
+  //
+  //----------------------------------------------------------------------
+
+  watch(
+    () => internal.auth.isSignedIn.value,
+    async (newValue, oldValue) => {
+      // サインインした場合
+      if (newValue) {
+        await fetchProducts()
+        await fetchCartItems()
+      }
+      // サインアウトした場合
+      else {
+        store.cart.setAll([])
+      }
+    }
+  )
+
+  //----------------------------------------------------------------------
+  //
   //  Result
   //
   //----------------------------------------------------------------------
@@ -215,7 +173,6 @@ function createShopLogic(): ShopLogic {
   return {
     products: store.product.all,
     cartItems: store.cart.all,
-    checkoutStatus: store.cart.checkoutStatus,
     cartTotalPrice: store.cart.totalPrice,
     fetchProducts,
     fetchCartItems,

@@ -1,8 +1,9 @@
+import { APIContainer, createAPI, provideAPI } from '@/logic/api'
 import { AuthLogic, createAuthLogic } from '@/logic/modules/auth'
 import { InjectionKey, inject, provide } from '@vue/composition-api'
+import { InternalLogic, createInternalLogic, provideInternalLogic } from '@/logic/modules/internal'
 import { ShopLogic, createShopLogic } from '@/logic/modules/shop'
-import { provideInternalLogic } from '@/logic/modules/internal'
-import { provideStore } from '@/logic/store'
+import { StoreContainer, createStore, provideStore } from '@/logic/store'
 
 //========================================================================
 //
@@ -30,10 +31,23 @@ function createLogic(): LogicContainer {
   }
 }
 
-function provideLogic(): void {
-  provideStore()
-  provideInternalLogic()
-  provide(LogicKey, createLogic())
+function provideLogic(options?: {
+  api?: APIContainer | typeof createAPI
+  store?: StoreContainer | typeof createStore
+  internal?: InternalLogic | typeof createInternalLogic
+  logic?: LogicContainer | typeof createLogic
+}): void {
+  provideAPI({ api: options?.api })
+  provideStore(options?.store)
+  provideInternalLogic(options?.internal)
+
+  let instance: LogicContainer
+  if (!options?.logic) {
+    instance = createLogic()
+  } else {
+    instance = typeof options.logic === 'function' ? options.logic() : options.logic
+  }
+  provide(LogicKey, instance)
 }
 
 function injectLogic(): LogicContainer {
@@ -42,8 +56,7 @@ function injectLogic(): LogicContainer {
 }
 
 function validateLogicProvided(): void {
-  const value = inject(LogicKey)
-  if (!value) {
+  if (!inject(LogicKey)) {
     throw new Error(`${LogicKey.description} is not provided`)
   }
 }
@@ -55,5 +68,5 @@ function validateLogicProvided(): void {
 //========================================================================
 
 export * from '@/logic/types'
-export { provideStore } from '@/logic/store'
+export { StoreUtil } from '@/logic/store'
 export { LogicContainer, LogicKey, provideLogic, injectLogic, validateLogicProvided }

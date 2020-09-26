@@ -1,7 +1,6 @@
+import { StatePartial, StoreUtil } from '@/logic/store/base'
 import { DeepReadonly } from 'web-base-lib'
 import { Product } from '@/logic/types'
-import { StatePartial } from '@/logic/store/base'
-import dayjs from 'dayjs'
 import { reactive } from '@vue/composition-api'
 
 //========================================================================
@@ -13,21 +12,21 @@ import { reactive } from '@vue/composition-api'
 interface ProductStore {
   readonly all: DeepReadonly<Product>[]
 
-  getById(productId: string): Product | undefined
+  getById(productId: string): DeepReadonly<Product> | undefined
 
-  sgetById(productId: string): Product
+  sgetById(productId: string): DeepReadonly<Product>
+
+  exists(productId: string): boolean
 
   setAll(products: Product[]): void
 
-  set(product: StatePartial<Product>): Product
+  add(product: Product): DeepReadonly<Product>
 
-  add(product: Product): Product
+  set(product: StatePartial<Product>): DeepReadonly<Product> | undefined
 
   decrementStock(productId: string): void
 
   incrementStock(productId: string): void
-
-  clone(source: Product): Product
 }
 
 //========================================================================
@@ -53,15 +52,18 @@ function createProductStore(): ProductStore {
   //
   //----------------------------------------------------------------------
 
+  const exists: ProductStore['exists'] = productId => {
+    return Boolean(getStateProductById(productId))
+  }
+
   const getById: ProductStore['getById'] = productId => {
-    const stateItem = getStateProductById(productId)
-    return stateItem ? clone(stateItem) : undefined
+    return getStateProductById(productId)
   }
 
   const sgetById: ProductStore['sgetById'] = productId => {
     const result = getById(productId)
     if (!result) {
-      throw new Error(`The specified Product was not found: { id: "${productId}" }`)
+      throw new Error(`The specified Product was not found: '${productId}'`)
     }
     return result
   }
@@ -69,30 +71,33 @@ function createProductStore(): ProductStore {
   const setAll: ProductStore['setAll'] = products => {
     state.all.splice(0)
     for (const product of products) {
-      state.all.push(clone(product))
+      state.all.push(StoreUtil.cloneProduct(product))
     }
+  }
+
+  const add: ProductStore['add'] = product => {
+    if (exists(product.id)) {
+      throw new Error(`The specified Product already exists: '${product.id}'`)
+    }
+
+    const stateItem = StoreUtil.cloneProduct(product)
+    state.all.push(stateItem)
+    return stateItem
   }
 
   const set: ProductStore['set'] = product => {
     const stateItem = getStateProductById(product.id)
     if (!stateItem) {
-      throw new Error(`The specified Product was not found: '${product.id}'`)
+      return
     }
 
-    populate(product, stateItem)
-    return clone(stateItem)
-  }
-
-  const add: ProductStore['add'] = product => {
-    const stateItem = clone(product)
-    state.all.push(stateItem)
-    return clone(stateItem)
+    return StoreUtil.populateProduct(product, stateItem)
   }
 
   const decrementStock: ProductStore['decrementStock'] = productId => {
     const product = state.all.find(item => item.id === productId)
     if (!product) {
-      throw new Error(`The specified product was not found: '${productId}'`)
+      throw new Error(`The specified Product was not found: '${productId}'`)
     }
     product.stock--
   }
@@ -100,13 +105,9 @@ function createProductStore(): ProductStore {
   const incrementStock: ProductStore['incrementStock'] = productId => {
     const product = state.all.find(item => item.id === productId)
     if (!product) {
-      throw new Error(`The specified product was not found: '${productId}'`)
+      throw new Error(`The specified Product was not found: '${productId}'`)
     }
     product.stock++
-  }
-
-  const clone: ProductStore['clone'] = source => {
-    return populate(source, {})
   }
 
   //----------------------------------------------------------------------
@@ -119,16 +120,6 @@ function createProductStore(): ProductStore {
     return state.all.find(item => item.id === productId)
   }
 
-  function populate(from: Partial<Product>, to: Partial<Product>): Product {
-    if (typeof from.id === 'string') to.id = from.id
-    if (typeof from.title === 'string') to.title = from.title
-    if (typeof from.price === 'number') to.price = from.price
-    if (typeof from.stock === 'number') to.stock = from.stock
-    if (from.createdAt) to.createdAt = dayjs(from.createdAt)
-    if (from.updatedAt) to.updatedAt = dayjs(from.updatedAt)
-    return to as Product
-  }
-
   //----------------------------------------------------------------------
   //
   //  Result
@@ -137,6 +128,7 @@ function createProductStore(): ProductStore {
 
   return {
     all: state.all,
+    exists,
     getById,
     sgetById,
     setAll,
@@ -144,7 +136,6 @@ function createProductStore(): ProductStore {
     add,
     decrementStock,
     incrementStock,
-    clone,
   }
 }
 

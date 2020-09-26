@@ -31,8 +31,14 @@ function createStore(): StoreContainer {
   }
 }
 
-function provideStore(): void {
-  provide(StoreKey, createStore())
+function provideStore(store?: StoreContainer | typeof createStore): void {
+  let instance: StoreContainer
+  if (!store) {
+    instance = createStore()
+  } else {
+    instance = typeof store === 'function' ? store() : store
+  }
+  provide(StoreKey, instance)
 }
 
 function injectStore(): StoreContainer {
@@ -53,4 +59,5 @@ function validateStoreProvided(): void {
 //
 //========================================================================
 
-export { StoreContainer, StoreKey, provideStore, injectStore, validateStoreProvided }
+export { StoreUtil } from '@/logic/store/base'
+export { StoreContainer, StoreKey, createStore, provideStore, injectStore, validateStoreProvided }

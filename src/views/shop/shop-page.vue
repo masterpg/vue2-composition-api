@@ -92,7 +92,7 @@
         <div class="total-amount layout horizontal center">
           <div class="detail">¥{{ state.cartTotalPrice }}</div>
         </div>
-        <div class="error-text flex-1">{{ state.checkoutMessage }}</div>
+        <div class="flex-1"></div>
         <q-btn v-show="!state.cartIsEmpty" :label="t('shop.checkout')" color="primary" @click="checkoutButtonOnClick" />
       </div>
     </div>
@@ -100,7 +100,7 @@
 </template>
 
 <script lang="ts">
-import { CartItem, CheckoutStatus, Product, injectLogic } from '@/logic'
+import { CartItem, Product, injectLogic } from '@/logic'
 import { computed, defineComponent, onMounted, reactive } from '@vue/composition-api'
 import { Loading } from 'quasar'
 import { useI18n } from '@/i18n'
@@ -134,14 +134,6 @@ export default defineComponent<ShopPageProps>({
       cartIsEmpty: computed<boolean>(() => {
         return state.cartItems.length === 0
       }),
-
-      checkoutStatus: logic.shop.checkoutStatus,
-
-      checkoutMessage: computed<string>(() => {
-        const checkoutStatus = state.checkoutStatus
-        const checkoutResult = checkoutStatus === CheckoutStatus.None || checkoutStatus === CheckoutStatus.Successful
-        return checkoutResult ? '' : 'Checkout failed.'
-      }),
     })
 
     //----------------------------------------------------------------------
@@ -151,7 +143,9 @@ export default defineComponent<ShopPageProps>({
     //----------------------------------------------------------------------
 
     onMounted(async () => {
+      Loading.show()
       await logic.shop.fetchProducts()
+      Loading.hide()
     })
 
     //----------------------------------------------------------------------

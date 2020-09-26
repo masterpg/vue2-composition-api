@@ -49,15 +49,16 @@ function createAuthLogic(): AuthLogic {
     store.user.set(TestData.user)
     internal.auth.isSignedIn.value = true
 
-    store.product.setAll(TestData.products)
+    // TODO
+    //  ここでローカルストレージに保存したIDトークンはAPIリクエストで使用されます。
+    //  ただしここで設定した値は非常に擬似的なものであり、実装にはアプリケーションの仕様
+    //  に基づき認証処理を実装してください。
+    localStorage.setItem('idToken', JSON.stringify({ uid: store.user.value.id }))
   }
 
   const signOut: AuthLogic['signOut'] = async () => {
     store.user.clear()
     internal.auth.isSignedIn.value = false
-
-    store.product.setAll(TestData.products)
-    store.cart.setAll([])
   }
 
   const validateSignedIn = internal.auth.validateSignedIn

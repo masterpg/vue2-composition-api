@@ -3,7 +3,7 @@ import VGreetMessage, { GreetMessage } from '@/views/abc/greet-message.vue'
 import { mount, shallowMount } from '@vue/test-utils'
 import { AuthLogic } from '@/logic/modules/auth'
 import { computed } from '@vue/composition-api'
-import { provideLogicToElement } from '../../../helpers/logic'
+import { provideDependencyToVue } from '../../../helpers'
 
 describe('GreetMessage', () => {
   it('template', () => {
@@ -13,7 +13,7 @@ describe('GreetMessage', () => {
     const wrapper = shallowMount<GreetMessage>(VGreetMessage, {
       propsData: { message },
       setup() {
-        provideLogicToElement(({ logic }) => {
+        provideDependencyToVue(({ logic }) => {
           td.replace<AuthLogic, 'isSignedIn'>(
             logic.auth,
             'isSignedIn',
@@ -38,7 +38,7 @@ describe('GreetMessage', () => {
     const wrapper = shallowMount<GreetMessage & { logic: LogicContainer }>(VGreetMessage, {
       propsData: { message },
       setup() {
-        const { logic } = provideLogicToElement(({ logic }) => {
+        const { logic } = provideDependencyToVue(({ logic }) => {
           td.replace<AuthLogic, 'validateSignedIn'>(logic.auth, 'validateSignedIn')
           td.replace<User, 'displayName'>(logic.auth.user, 'displayName', userName)
         })
@@ -47,13 +47,13 @@ describe('GreetMessage', () => {
     })
     const { logic, ...greetMessage } = wrapper.vm
 
-    // テスト対象を実行
+    // テスト対象実行
     const actual = greetMessage.greet()
 
     // 戻り値の検証
     expect(actual).toBe(`Hi ${userName}, ${message}.`)
 
-    // logic.auth.validateSignedInの呼び出しを検証
+    // validateSignedInの呼び出しを検証
     const exp = td.explain(logic.auth.validateSignedIn)
     expect(exp.calls.length).toBe(1) // 1回呼び出されるはず
     expect(exp.calls[0].args[0]).toBeUndefined() // 1回目の呼び出しが引数なしなはず

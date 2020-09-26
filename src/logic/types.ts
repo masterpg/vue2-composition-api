@@ -6,21 +6,24 @@ import { Dayjs } from 'dayjs'
 //
 //========================================================================
 
+//--------------------------------------------------
+//  Foundation
+//--------------------------------------------------
+
 interface Entity {
   id: string
 }
 
-interface TimestampEntity {
-  id: string
+interface TimestampEntity extends Entity {
   createdAt: Dayjs
   updatedAt: Dayjs
 }
 
-//========================================================================
-//
-//  Interfaces
-//
-//========================================================================
+type OmitEntityTimestamp<T> = Omit<T, 'createdAt' | 'updatedAt'>
+
+//--------------------------------------------------
+//  Application
+//--------------------------------------------------
 
 interface User extends TimestampEntity {
   email: string
@@ -41,16 +44,10 @@ interface CartItem extends TimestampEntity {
   quantity: number
 }
 
-enum CheckoutStatus {
-  None = 'none',
-  Failed = 'failed',
-  Successful = 'successful',
-}
-
 //========================================================================
 //
 //  Export
 //
 //========================================================================
 
-export { User, Product, CartItem, CheckoutStatus }
+export { Entity, TimestampEntity, OmitEntityTimestamp, User, Product, CartItem }

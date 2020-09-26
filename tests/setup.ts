@@ -1,6 +1,6 @@
-import { clearProvidedLogic, clearProvidedLogicToElement } from './helpers/logic'
 import Vue from 'vue'
 import VueCompositionApi from '@vue/composition-api'
+import { clearProvidedDependency } from './helpers'
 import { createI18n } from '@/i18n'
 import { quasar } from '@/quasar'
 import td from 'testdouble'
@@ -33,7 +33,6 @@ beforeEach(async () => {
 })
 
 afterEach(function() {
-  clearProvidedLogic()
-  clearProvidedLogicToElement()
+  clearProvidedDependency()
   td.reset()
 })

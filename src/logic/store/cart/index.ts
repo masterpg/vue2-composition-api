@@ -1,8 +1,7 @@
-import { CartItem, CheckoutStatus } from '@/logic/types'
 import { ComputedRef, computed, reactive } from '@vue/composition-api'
+import { StatePartial, StoreUtil } from '@/logic/store/base'
+import { CartItem } from '@/logic/types'
 import { DeepReadonly } from 'web-base-lib'
-import { StatePartial } from '@/logic/store/base'
-import dayjs from 'dayjs'
 
 //========================================================================
 //
@@ -15,29 +14,25 @@ interface CartStore {
 
   readonly totalPrice: ComputedRef<number>
 
-  readonly checkoutStatus: ComputedRef<CheckoutStatus>
+  getById(cartItemId: string): DeepReadonly<CartItem> | undefined
 
-  getById(cartItemId: string): CartItem | undefined
+  sgetById(cartItemId: string): DeepReadonly<CartItem>
 
-  sgetById(cartItemId: string): CartItem
+  getByProductId(productId: string): DeepReadonly<CartItem> | undefined
 
-  getByProductId(productId: string): CartItem | undefined
+  sgetByProductId(productId: string): DeepReadonly<CartItem>
 
-  sgetByProductId(productId: string): CartItem
+  exists(productId: string): boolean
 
   setAll(items: CartItem[]): void
 
-  set(item: StatePartial<Omit<CartItem, 'uid' | 'productId'>>): CartItem | undefined
+  add(item: CartItem): DeepReadonly<CartItem>
 
-  setCheckoutStatus(status: CheckoutStatus): void
+  set(item: StatePartial<Omit<CartItem, 'uid' | 'productId'>>): DeepReadonly<CartItem> | undefined
 
-  add(item: CartItem): CartItem
-
-  remove(cartItemId: string): CartItem | undefined
+  remove(cartItemId: string): DeepReadonly<CartItem> | undefined
 
   clear(): void
-
-  clone(source: CartItem): CartItem
 }
 
 //========================================================================
@@ -55,7 +50,6 @@ function createCartStore(): CartStore {
 
   const state = reactive({
     all: [] as CartItem[],
-    checkoutStatus: CheckoutStatus.None,
   })
 
   //----------------------------------------------------------------------
@@ -63,8 +57,6 @@ function createCartStore(): CartStore {
   //  Properties
   //
   //----------------------------------------------------------------------
-
-  const checkoutStatus = computed(() => state.checkoutStatus)
 
   const totalPrice = computed(() => {
     const result = state.all.reduce((result, item) => {
@@ -79,28 +71,30 @@ function createCartStore(): CartStore {
   //
   //----------------------------------------------------------------------
 
+  const exists: CartStore['exists'] = cartItemId => {
+    return Boolean(getStateCartItemById(cartItemId))
+  }
+
   const getById: CartStore['getById'] = cartItemId => {
-    const stateItem = getStateCartItemById(cartItemId)
-    return stateItem ? clone(stateItem) : undefined
+    return getStateCartItemById(cartItemId)
   }
 
   const sgetById: CartStore['sgetById'] = cartItemId => {
     const result = getById(cartItemId)
     if (!result) {
-      throw new Error(`The specified CartItem was not found: { id: "${cartItemId}" }`)
+      throw new Error(`The specified CartItem was not found: '${cartItemId}'`)
     }
     return result
   }
 
   const getByProductId: CartStore['getByProductId'] = productId => {
-    const stateItem = state.all.find(item => item.productId === productId)
-    return stateItem ? clone(stateItem) : undefined
+    return state.all.find(item => item.productId === productId)
   }
 
   const sgetByProductId: CartStore['sgetByProductId'] = productId => {
     const result = getByProductId(productId)
     if (!result) {
-      throw new Error(`The specified CartItem was not found: { productId: "${productId}" }`)
+      throw new Error(`The specified CartItem was not found: ${JSON.stringify({ productId })}`)
     }
     return result
   }
@@ -108,28 +102,27 @@ function createCartStore(): CartStore {
   const setAll: CartStore['setAll'] = items => {
     state.all.splice(0)
     for (const item of items) {
-      state.all.push(clone(item))
+      state.all.push(StoreUtil.cloneCartItem(item))
     }
+  }
+
+  const add: CartStore['add'] = item => {
+    if (exists(item.id)) {
+      throw new Error(`The specified CartItem already exists: '${item.id}'`)
+    }
+
+    const stateItem = StoreUtil.cloneCartItem(item)
+    state.all.push(stateItem)
+    return stateItem
   }
 
   const set: CartStore['set'] = item => {
     const stateItem = getStateCartItemById(item.id)
     if (!stateItem) {
-      throw new Error(`The specified CartItem was not found: '${item.id}'`)
+      return
     }
 
-    populate(item, stateItem)
-    return clone(stateItem)
-  }
-
-  const setCheckoutStatus: CartStore['setCheckoutStatus'] = status => {
-    state.checkoutStatus = status
-  }
-
-  const add: CartStore['add'] = item => {
-    const stateItem = clone(item)
-    state.all.push(stateItem)
-    return clone(stateItem)
+    return StoreUtil.populateCartItem(item, stateItem)
   }
 
   const remove: CartStore['remove'] = cartItemId => {
@@ -150,12 +143,7 @@ function createCartStore(): CartStore {
   }
 
   const clear: CartStore['clear'] = () => {
-    state.checkoutStatus = CheckoutStatus.None
     state.all.splice(0, state.all.length)
-  }
-
-  const clone: CartStore['clone'] = source => {
-    return populate(source, {})
   }
 
   //----------------------------------------------------------------------
@@ -168,18 +156,6 @@ function createCartStore(): CartStore {
     return state.all.find(item => item.id === cartItemId)
   }
 
-  function populate(from: Partial<CartItem>, to: Partial<CartItem>): CartItem {
-    if (typeof from.id === 'string') to.id = from.id
-    if (typeof from.uid === 'string') to.uid = from.uid
-    if (typeof from.productId === 'string') to.productId = from.productId
-    if (typeof from.title === 'string') to.title = from.title
-    if (typeof from.price === 'number') to.price = from.price
-    if (typeof from.quantity === 'number') to.quantity = from.quantity
-    if (from.createdAt) to.createdAt = dayjs(from.createdAt)
-    if (from.updatedAt) to.updatedAt = dayjs(from.updatedAt)
-    return to as CartItem
-  }
-
   //----------------------------------------------------------------------
   //
   //  Result
@@ -188,19 +164,17 @@ function createCartStore(): CartStore {
 
   return {
     all: state.all,
-    checkoutStatus,
     totalPrice,
+    exists,
     getById,
     sgetById,
     getByProductId,
     sgetByProductId,
     setAll,
     set,
-    setCheckoutStatus,
     add,
     remove,
     clear,
-    clone,
   }
 }
 

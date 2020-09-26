@@ -8,9 +8,7 @@ import { injectStore } from '@/logic/store'
 //========================================================================
 
 interface InternalLogic {
-  helper: {
-    generateId: () => string
-  }
+  helper: {}
   auth: {
     isSignedIn: WritableComputedRef<boolean>
     validateSignedIn(): void
@@ -32,18 +30,7 @@ type InternalAuthLogic = InternalLogic['auth']
 //--------------------------------------------------
 
 function createInternalHelperLogic(): InternalHelperLogic {
-  const generateId: InternalHelperLogic['generateId'] = () => {
-    const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-    let autoId = ''
-    for (let i = 0; i < 20; i++) {
-      autoId += CHARS.charAt(Math.floor(Math.random() * CHARS.length))
-    }
-    return autoId
-  }
-
-  return {
-    generateId,
-  }
+  return {}
 }
 
 //--------------------------------------------------
@@ -87,8 +74,14 @@ function createInternalLogic(): InternalLogic {
   }
 }
 
-function provideInternalLogic(): void {
-  provide(InternalLogicKey, createInternalLogic())
+function provideInternalLogic(internal?: InternalLogic | typeof createInternalLogic): void {
+  let instance: InternalLogic
+  if (!internal) {
+    instance = createInternalLogic()
+  } else {
+    instance = typeof internal === 'function' ? internal() : internal
+  }
+  provide(InternalLogicKey, instance)
 }
 
 function injectInternalLogic(): InternalLogic {
@@ -97,8 +90,7 @@ function injectInternalLogic(): InternalLogic {
 }
 
 function validateInternalLogicProvided(): void {
-  const value = inject(InternalLogicKey)
-  if (!value) {
+  if (!inject(InternalLogicKey)) {
     throw new Error(`${InternalLogicKey.description} is not provided`)
   }
 }
@@ -116,6 +108,7 @@ export {
   InternalLogicKey,
   createInternalAuthLogic,
   createInternalHelperLogic,
+  createInternalLogic,
   injectInternalLogic,
   provideInternalLogic,
   validateInternalLogicProvided,
