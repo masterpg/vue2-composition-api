@@ -61,8 +61,10 @@
 </template>
 
 <script lang="ts">
+import { ServiceWorkerChangeState, injectServiceWorker, provideServiceWorker } from '@/service-worker'
 import { defineComponent, reactive } from '@vue/composition-api'
 import { injectLogic, provideLogic } from '@/logic'
+import { Notify } from 'quasar'
 import { Platform } from 'quasar'
 import { provideConfig } from '@/config'
 import { useI18n } from '@/i18n'
@@ -77,8 +79,10 @@ export default defineComponent({
 
     provideConfig()
     provideLogic()
+    provideServiceWorker()
 
     const logic = injectLogic()
+    const serviceWorker = injectServiceWorker()
     const { t } = useI18n()
 
     const state = reactive({
@@ -117,6 +121,39 @@ export default defineComponent({
     function signOutMenuItemOnClick() {
       logic.auth.signOut()
     }
+
+    serviceWorker.addStateChangeListener(info => {
+      if (info.state === ServiceWorkerChangeState.updated) {
+        Notify.create({
+          icon: 'info',
+          position: 'bottom-left',
+          message: info.message,
+          actions: [
+            {
+              label: t('common.reload'),
+              color: 'white',
+              handler: () => {
+                window.location.reload()
+              },
+            },
+          ],
+          timeout: 0,
+        })
+      } else if (info.state === ServiceWorkerChangeState.cached) {
+        Notify.create({
+          icon: 'info',
+          position: 'bottom-left',
+          message: info.message,
+          timeout: 3000,
+        })
+      }
+
+      if (info.state === ServiceWorkerChangeState.error) {
+        console.error(info.message)
+      } else {
+        console.log('Service Worker:\n', info)
+      }
+    })
 
     //----------------------------------------------------------------------
     //

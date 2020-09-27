@@ -1,6 +1,5 @@
 import '@/styles/app.sass'
 
-import '@/registerServiceWorker'
 import AppPage from '@/index.vue'
 import Vue from 'vue'
 import VueCompositionApi from '@vue/composition-api'

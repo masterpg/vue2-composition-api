@@ -30,6 +30,47 @@ module.exports = {
 
   pages,
 
+  // Firebase Hostingでハッシュ付きのファイルを使用すると、
+  // Service Workerで不具合が生じ、新しいリソースがキャッシュできなかったり、
+  // 画面ロード時にリソースをうまく見つけられずエラーが発生したりする。
+  // このためファイル名にハッシュをつけないよう設定している。
+  filenameHashing: false,
+
+  pwa: {
+    name: 'vue2-composition-api',
+    iconPaths: {
+      favicon32: 'img/icons/favicon-32x32.png',
+      favicon16: 'img/icons/favicon-16x16.png',
+      appleTouchIcon: 'img/icons/manifest/apple-touch-icon-152x152.png',
+      maskIcon: 'img/icons/manifest/safari-pinned-tab.svg',
+      msTileImage: 'img/icons/manifest/msapplication-icon-144x144.png',
+    },
+    // Workbox webpack Plugins
+    // https://developers.google.com/web/tools/workbox/modules/workbox-webpack-plugin
+    workboxOptions: {
+      // skipWaitingについては以下を参照
+      // https://developers.google.com/web/fundamentals/primers/service-workers/lifecycle?hl=ja#updates
+      skipWaiting: true,
+
+      // ServiceWorkerインストール時にキャッシュされるファイルを設定
+      include: [/\.html$/, /\.js$/, /\.css$/, /^favicon\.ico$/, /^img\/(?:[^/]+\/)*[^/]+\.(?:jpg|jpeg|png|gif|bmp|svg)$/, /^fonts\/(?:[^/]+\/)*[^/]+\.woff2?$/],
+      exclude: [/\.map$/],
+
+      // `/`以下のパスで存在しないファイルまたはディレクトリが
+      // 指定された場合にindex.htmlへフォールバックするよう設定
+      navigateFallback: '/index.html',
+      navigateFallbackWhitelist: [/^\//],
+
+      // フェッチ時にキャッシュされるパスを設定
+      runtimeCaching: [
+        {
+          urlPattern: /\/api\//,
+          handler: 'NetworkFirst',
+        },
+      ],
+    },
+  },
+
   chainWebpack: config => {
     // Vue I18n 単一ファイルコンポーネントの設定
     // http://kazupon.github.io/vue-i18n/guide/sfc.html
@@ -38,11 +79,11 @@ module.exports = {
       .resourceQuery(/blockType=i18n/)
       .type('javascript/auto')
       .use('i18n')
-      .loader('@kazupon/vue-i18n-loader')
-      .end()
+        .loader('@kazupon/vue-i18n-loader')
+        .end()
       .use('yaml')
-      .loader('yaml-loader')
-      .end()
+        .loader('yaml-loader')
+        .end()
   },
 
   devServer: {
