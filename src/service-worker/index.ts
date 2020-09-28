@@ -1,4 +1,5 @@
 import { InjectionKey, inject, provide, reactive } from '@vue/composition-api'
+import { ServiceWorkerChangeState } from '@/service-worker/register'
 import { useI18n } from '@/i18n'
 const path = require('path')
 
@@ -17,16 +18,6 @@ interface ServiceWorkerManager {
 }
 
 type StateChangeLister = (info: ServiceWorkerStateChangeInfo) => void
-
-enum ServiceWorkerChangeState {
-  ready = 'ready',
-  registered = 'registered',
-  cached = 'cached',
-  updatefound = 'updatefound',
-  updated = 'updated',
-  offline = 'offline',
-  error = 'error',
-}
 
 interface ServiceWorkerStateChangeInfo {
   state: ServiceWorkerChangeState
@@ -67,28 +58,28 @@ function createServiceWorker(): ServiceWorkerManager {
   //
   //----------------------------------------------------------------------
 
-  const register = require('register-service-worker').register
+  const register = require('@/service-worker/register').register
   register(path.join(process.env.BASE_URL ?? '', 'service-worker.js'), {
     ready: () => {
-      dispatchToListeners(ServiceWorkerChangeState.ready, String(t('serviceWorker.ready')))
+      dispatchToListeners('ready', String(t('serviceWorker.ready')))
     },
     registered: () => {
-      dispatchToListeners(ServiceWorkerChangeState.registered, String(t('serviceWorker.registered')))
+      dispatchToListeners('registered', String(t('serviceWorker.registered')))
     },
     cached: () => {
-      dispatchToListeners(ServiceWorkerChangeState.cached, String(t('serviceWorker.cached')))
+      dispatchToListeners('cached', String(t('serviceWorker.cached')))
     },
     updatefound: () => {
-      dispatchToListeners(ServiceWorkerChangeState.updatefound, String(t('serviceWorker.updatefound')))
+      dispatchToListeners('updatefound', String(t('serviceWorker.updatefound')))
     },
     updated: () => {
-      dispatchToListeners(ServiceWorkerChangeState.updated, String(t('serviceWorker.updated')))
+      dispatchToListeners('updated', String(t('serviceWorker.updated')))
     },
     offline: () => {
-      dispatchToListeners(ServiceWorkerChangeState.offline, String(t('serviceWorker.offline')))
+      dispatchToListeners('offline', String(t('serviceWorker.offline')))
     },
     error: (err: Error) => {
-      dispatchToListeners(ServiceWorkerChangeState.error, String(t('serviceWorker.error', { err })))
+      dispatchToListeners('error', String(t('serviceWorker.error', { err })))
     },
   })
 

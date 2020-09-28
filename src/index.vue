@@ -123,7 +123,7 @@ export default defineComponent({
     }
 
     serviceWorker.addStateChangeListener(info => {
-      if (info.state === ServiceWorkerChangeState.updated) {
+      if (info.state === 'updated') {
         Notify.create({
           icon: 'info',
           position: 'bottom-left',
@@ -139,7 +139,7 @@ export default defineComponent({
           ],
           timeout: 0,
         })
-      } else if (info.state === ServiceWorkerChangeState.cached) {
+      } else if (info.state === 'cached') {
         Notify.create({
           icon: 'info',
           position: 'bottom-left',
@@ -148,10 +148,10 @@ export default defineComponent({
         })
       }
 
-      if (info.state === ServiceWorkerChangeState.error) {
+      if (info.state === 'error') {
         console.error(info.message)
       } else {
-        console.log('Service Worker:\n', info)
+        console.log('ServiceWorker:', JSON.stringify(info, null, 2))
       }
     })
 

@@ -7,7 +7,7 @@
     "build:stg": "vue-cli-service build --mode staging",
     "build": "vue-cli-service build --mode production",
     "serve": "vue-cli-service serve --mode development",
-    "serve:stg": "browser-sync 'dist' --port 5030 --no-open",
+    "serve:stg": "npm run build:stg && browser-sync 'dist' --port 5030 --no-open",
     "serve:api": "node server",
     "test:unit": "vue-cli-service test:unit",
     "lint": "./node_modules/web-base-lib/tools/lint.sh"
