@@ -1,5 +1,7 @@
+const path = require('path')
+
 // ベースURLの設定
-const publicPath = process.env.VUE_APP_BASE_URL
+const publicPath = process.env.VUE_APP_BASE_URL ?? ''
 
 // 各エントリーポイントの設定
 const pages = {
@@ -58,8 +60,7 @@ module.exports = {
 
       // `/`以下のパスで存在しないファイルまたはディレクトリが
       // 指定された場合にindex.htmlへフォールバックするよう設定
-      navigateFallback: '/index.html',
-      navigateFallbackWhitelist: [/^\//],
+      navigateFallback: `${path.join(publicPath, '/index.html')}`,
 
       // フェッチ時にキャッシュされるパスを設定
       runtimeCaching: [
