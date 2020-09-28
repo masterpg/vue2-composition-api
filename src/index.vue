@@ -61,9 +61,9 @@
 </template>
 
 <script lang="ts">
-import { ServiceWorkerChangeState, injectServiceWorker, provideServiceWorker } from '@/service-worker'
 import { defineComponent, reactive } from '@vue/composition-api'
 import { injectLogic, provideLogic } from '@/logic'
+import { injectServiceWorker, provideServiceWorker } from '@/service-worker'
 import { Notify } from 'quasar'
 import { Platform } from 'quasar'
 import { provideConfig } from '@/config'
@@ -127,7 +127,7 @@ export default defineComponent({
         Notify.create({
           icon: 'info',
           position: 'bottom-left',
-          message: info.message,
+          message: String(t('app.updated')),
           actions: [
             {
               label: t('common.reload'),
@@ -138,13 +138,6 @@ export default defineComponent({
             },
           ],
           timeout: 0,
-        })
-      } else if (info.state === 'cached') {
-        Notify.create({
-          icon: 'info',
-          position: 'bottom-left',
-          message: info.message,
-          timeout: 3000,
         })
       }
 

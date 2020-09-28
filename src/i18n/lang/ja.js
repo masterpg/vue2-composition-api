@@ -4,6 +4,9 @@ export default {
     signIn: 'サインイン',
     signOut: 'サインアウト',
   },
+  app: {
+    updated: 'アプリケーションが更新されました。',
+  },
   abc: {
     hello: 'こんにちは、{name}さん。',
     today: '今日は {date} です。',
@@ -17,12 +20,12 @@ export default {
     checkout: 'チェックアウト',
   },
   serviceWorker: {
-    ready: 'アプリケーションは Service Worker によってキャッシュからサーブされています。詳細は https://goo.gl/AFskqB を参照ください。',
-    registered: 'Service Worker は既に登録されています。',
-    cached: 'オフライン用にコンテンツがキャッシュされました。',
-    updatefound: '新しいコンテンツがダウンロード中です。',
-    updated: '新しいコンテンツが利用可能になりました。',
-    offline: 'インターネットの接続がみつかりません。アプリケーションはオフラインモードで実行しています。',
-    error: 'Service Worker の登録でエラーが発生しました: {error}',
+    ready: 'ServiceWorkerが起動しました。',
+    installing: 'ServiceWorkerをインストールしています。',
+    updating: 'ServiceWorkerを更新しています。',
+    installed: 'ServiceWorkerがインストールされました。',
+    updated: 'ServiceWorkerが更新されました。',
+    offline: 'サーバーへ接続できないため、ServiceWorkerはオフラインモードで実行しています。',
+    error: 'ServiceWorkerの登録でエラーが発生しました.',
   },
 }

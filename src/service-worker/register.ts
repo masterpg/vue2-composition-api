@@ -1,19 +1,10 @@
-// Register a service worker to serve assets from local cache.
-
-// This lets the app load faster on subsequent visits in production, and gives
-// it offline capabilities. However, it also means that developers (and users)
-// will only see deployed updates on the "N+1" visit to a page, since previously
-// cached resources are updated in the background.
-
-import { sleep } from 'web-base-lib'
-
 //========================================================================
 //
 //  Interfaces
 //
 //========================================================================
 
-type ServiceWorkerChangeState = 'ready' | 'registered' | 'cached' | 'updatefound' | 'updated' | 'offline' | 'error'
+type ServiceWorkerChangeState = 'ready' | 'installing' | 'updating' | 'installed' | 'updated' | 'offline' | 'error'
 
 type HookFunc = (state: ServiceWorkerChangeState) => void
 type HookRegistrationFunc = (state: ServiceWorkerChangeState, registration: ServiceWorkerRegistration) => void
@@ -21,16 +12,14 @@ type HookErrorFunc = (state: 'error', error: Error) => void
 
 interface Hooks {
   ready?: HookRegistrationFunc
-  registered?: HookRegistrationFunc
-  cached?: HookRegistrationFunc
-  updatefound?: HookRegistrationFunc
+  installing?: HookRegistrationFunc
+  updating?: HookRegistrationFunc
+  installed?: HookRegistrationFunc
   updated?: HookRegistrationFunc
   offline?: HookFunc
   error?: HookErrorFunc
   registrationOptions?: RegistrationOptions
 }
-
-type EmitFunc = (state: ServiceWorkerChangeState, registration_or_error?: ServiceWorkerRegistration | Error) => void
 
 //========================================================================
 //
@@ -38,29 +27,58 @@ type EmitFunc = (state: ServiceWorkerChangeState, registration_or_error?: Servic
 //
 //========================================================================
 
-const isLocalhost = () =>
-  Boolean(
-    window.location.hostname === 'localhost' ||
-      // [::1] is the IPv6 localhost address.
-      window.location.hostname === '[::1]' ||
-      // 127.0.0.1/8 is considered localhost for IPv4.
-      window.location.hostname.match(/^127(?:\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$/)
-  )
-
-const waitWindowLoad = new Promise(resolve => {
-  window.addEventListener('load', resolve)
-})
-
-function register(swUrl: string, hooks: Hooks = {}): void {
+function register(serviceWorkerURL: string, hooks: Hooks = {}): void {
   const { registrationOptions = {} } = hooks
   delete hooks.registrationOptions
 
-  const emit: EmitFunc = (state, registration_or_error) => {
+  //----------------------------------------------------------------------
+  //
+  //  Initialization
+  //
+  //----------------------------------------------------------------------
+
+  function isLocalhost(): boolean {
+    return Boolean(
+      window.location.hostname === 'localhost' ||
+        // [::1] is the IPv6 localhost address.
+        window.location.hostname === '[::1]' ||
+        // 127.0.0.1/8 is considered localhost for IPv4.
+        window.location.hostname.match(/^127(?:\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$/)
+    )
+  }
+
+  const waitWindowLoad = new Promise(resolve => {
+    window.addEventListener('load', resolve)
+  })
+
+  if ('serviceWorker' in navigator) {
+    waitWindowLoad.then(async () => {
+      // サーバーがローカルホストで実行されている場合
+      if (isLocalhost()) {
+        // This is running on localhost. Lets check if a service worker still exists or not.
+        // ServiceWorkerの検証をした後、登録を行う
+        await checkAndRegisterServiceWorker(serviceWorkerURL, registrationOptions)
+      }
+      // サーバーがローカルホストでない場合
+      else {
+        // ServiceWorkerの検証はせず登録を行う
+        await registerServiceWorker(serviceWorkerURL, registrationOptions)
+      }
+    })
+  }
+
+  //----------------------------------------------------------------------
+  //
+  //  Internal methods
+  //
+  //----------------------------------------------------------------------
+
+  function emit(state: ServiceWorkerChangeState, registration_or_error?: ServiceWorkerRegistration | Error): void {
     switch (state) {
       case 'ready':
-      case 'registered':
-      case 'cached':
-      case 'updatefound':
+      case 'installing':
+      case 'updating':
+      case 'installed':
       case 'updated': {
         const hookFunc = hooks[state]
         hookFunc && hookFunc(state, registration_or_error as ServiceWorkerRegistration)
@@ -79,101 +97,114 @@ function register(swUrl: string, hooks: Hooks = {}): void {
     }
   }
 
-  if ('serviceWorker' in navigator) {
-    waitWindowLoad.then(async () => {
-      if (isLocalhost()) {
-        // This is running on localhost. Lets check if a service worker still exists or not.
-        await checkValidServiceWorker(swUrl, emit, registrationOptions)
-        const registration = await navigator.serviceWorker.ready.then()
-        emit('ready', registration)
-      } else {
-        // Is not local host. Just register service worker
-        await registerValidSW(swUrl, emit, registrationOptions)
-        const registration = await navigator.serviceWorker.ready.then()
-        emit('ready', registration)
-      }
-    })
-  }
-}
-
-function handleError(emit: EmitFunc, error: Error) {
-  if (!navigator.onLine) {
-    emit('offline')
-  }
-  emit('error', error)
-}
-
-async function registerValidSW(swUrl: string, emit: EmitFunc, registrationOptions: RegistrationOptions) {
-  let registration!: ServiceWorkerRegistration
-  try {
-    registration = await navigator.serviceWorker.register(swUrl, registrationOptions)
-  } catch (err) {
-    handleError(emit, err)
-  }
-
-  emit('registered', registration)
-
-  if (registration.waiting) {
-    emit('updated', registration)
-    return
-  }
-
-  registration.onupdatefound = () => {
-    emit('updatefound', registration)
-    const installingWorker = registration.installing
-    if (!installingWorker) {
-      handleError(emit, new Error('Service worker during installation was not found.'))
+  async function registerServiceWorker(serviceWorkerURL: string, registrationOptions: RegistrationOptions) {
+    let registration!: ServiceWorkerRegistration
+    try {
+      registration = await navigator.serviceWorker.register(serviceWorkerURL, registrationOptions)
+    } catch (err) {
+      handleError(err)
       return
     }
 
-    installingWorker.onstatechange = () => {
-      if (installingWorker.state === 'installed') {
-        if (navigator.serviceWorker.controller) {
-          // At this point, the old content will have been purged and
-          // the fresh content will have been added to the cache.
-          // It's the perfect time to display a "New content is
-          // available; please refresh." message in your web app.
-          sleep(1000).then(() => {
-            // TODO
-            //  このイベントを受け取った側で以下のコードが実行されると、リロードしてもServiceWorker
-            //  の状態が`skipWaiting`から先に進まず更新が完了しなくなってしまう。
-            //  この対応として一定時間スリープしてからイベントを発火すれば問題は発生しなくなった。
-            //  ```
-            //    Notify.create({
-            //      …
-            //      actions: { … }
-            //    })
-            //  ```
-            emit('updated', registration)
-          })
-        } else {
-          // At this point, everything has been precached.
-          // It's the perfect time to display a
-          // "Content is cached for offline use." message.
-          emit('cached', registration)
+    //
+    // installing
+    //
+    if (registration.installing) {
+      const serviceWorker = registration.installing
+
+      // ServiceWorkerにアップデートがあるかを取得
+      registration.onupdatefound = () => {
+        emit('installing', registration)
+      }
+
+      // インストール状態の変化を監視
+      registration.installing.onstatechange = async () => {
+        // ここでは次の順で状態(serviceWorker.state)が変化する
+        // 'installed' -> 'activating' -> 'activated'
+        if (serviceWorker.state === 'activated') {
+          // インストール完了イベントを発火
+          emit('installed', registration)
+          // インストールされたServiceWorkerが使用可能になるまで待機
+          await navigator.serviceWorker.ready.then()
+          emit('ready', registration)
         }
       }
     }
-  }
-}
+    //
+    // active
+    //
+    else if (registration.active) {
+      const serviceWorker = registration.active
 
-async function checkValidServiceWorker(swUrl: string, emit: EmitFunc, registrationOptions: RegistrationOptions): Promise<void> {
-  try {
-    const response = await fetch(swUrl)
-    // Ensure service worker exists, and that we really are getting a JS file.
-    if (response.status === 404) {
-      // No service worker found.
-      emit('error', new Error(`Service worker not found at ${swUrl}`))
-      await unregister()
-    } else if (response.headers.get('content-type')!.indexOf('javascript') === -1) {
-      emit('error', new Error(`Expected ${swUrl} to have javascript content-type, but received ${response.headers.get('content-type')}`))
-      await unregister()
-    } else {
-      // Service worker found. Proceed as normal.
-      await registerValidSW(swUrl, emit, registrationOptions)
+      // インストール済みServiceWorkerが使用可能になるまで待機
+      await navigator.serviceWorker.ready.then()
+      emit('ready', registration)
+
+      // インストール済みServiceWorkerにアップデートがあるかを取得
+      registration.onupdatefound = () => {
+        emit('updating', registration)
+      }
+
+      // インストール済みServiceWorkerのアップデート状態の変化を監視
+      registration.active.onstatechange = async () => {
+        if (serviceWorker.state === 'redundant') {
+          // アップデート完了イベントを発火
+          emit('updated', registration)
+          // アップデートされたServiceWorkerが使用可能になるまで待機
+          await navigator.serviceWorker.ready.then()
+          emit('ready', registration)
+        }
+      }
     }
-  } catch (err) {
-    handleError(emit, err)
+    //
+    // waiting
+    //
+    else if (registration.waiting) {
+      // TODO ここはどのような状況で入ってくるのか確認できていない
+      console.warn(`ServiceWorker: This block is not supposed to be executed.`)
+
+      const serviceWorker = registration.waiting
+
+      registration.waiting.onstatechange = () => {
+        console.log('ServiceWorker waiting:', serviceWorker.state)
+      }
+    }
+    //
+    // others
+    //
+    else {
+      // TODO ここはどのような状況で入ってくるのか確認できていない
+      console.warn(`ServiceWorker: This block is not supposed to be executed.`)
+    }
+  }
+
+  async function checkAndRegisterServiceWorker(serviceWorkerURL: string, registrationOptions: RegistrationOptions): Promise<void> {
+    try {
+      const response = await fetch(serviceWorkerURL)
+      // ServiceWorkerの挙動を実装したJSファイルが存在するか検証
+      if (response.status === 404) {
+        emit('error', new Error(`ServiceWorker not found at ${serviceWorkerURL}`))
+        await unregister()
+      } else if (response.headers.get('content-type')!.indexOf('javascript') === -1) {
+        emit('error', new Error(`Expected ${serviceWorkerURL} to have javascript content-type, but received ${response.headers.get('content-type')}`))
+        await unregister()
+      }
+      // ServiceWorkerの挙動を実装したJSファイルが存在する場合
+      else {
+        // ServiceWorkerの登録実行
+        await registerServiceWorker(serviceWorkerURL, registrationOptions)
+      }
+    } catch (err) {
+      handleError(err)
+    }
+  }
+
+  function handleError(error: Error) {
+    if (!navigator.onLine) {
+      emit('offline')
+    }
+    console.error('ServiceWorker', error)
+    emit('error', error)
   }
 }
 

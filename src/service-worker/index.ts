@@ -63,14 +63,14 @@ function createServiceWorker(): ServiceWorkerManager {
     ready: () => {
       dispatchToListeners('ready', String(t('serviceWorker.ready')))
     },
-    registered: () => {
-      dispatchToListeners('registered', String(t('serviceWorker.registered')))
+    installing: () => {
+      dispatchToListeners('installing', String(t('serviceWorker.installing')))
     },
-    cached: () => {
-      dispatchToListeners('cached', String(t('serviceWorker.cached')))
+    updating: () => {
+      dispatchToListeners('updating', String(t('serviceWorker.updating')))
     },
-    updatefound: () => {
-      dispatchToListeners('updatefound', String(t('serviceWorker.updatefound')))
+    installed: () => {
+      dispatchToListeners('installed', String(t('serviceWorker.installed')))
     },
     updated: () => {
       dispatchToListeners('updated', String(t('serviceWorker.updated')))
@@ -79,7 +79,7 @@ function createServiceWorker(): ServiceWorkerManager {
       dispatchToListeners('offline', String(t('serviceWorker.offline')))
     },
     error: (err: Error) => {
-      dispatchToListeners('error', String(t('serviceWorker.error', { err })))
+      dispatchToListeners('error', String(t('serviceWorker.error')))
     },
   })
 

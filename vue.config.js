@@ -46,7 +46,7 @@ module.exports = {
       msTileImage: 'img/icons/manifest/msapplication-icon-144x144.png',
     },
     // Workbox webpack Plugins
-    // https://developers.google.com/web/tools/workbox/modules/workbox-webpack-plugin
+    // https://developers.google.com/web/tools/workbox/reference-docs/latest/module-workbox-webpack-plugin.GenerateSW#GenerateSW
     workboxOptions: {
       // skipWaitingについては以下を参照
       // https://developers.google.com/web/fundamentals/primers/service-workers/lifecycle?hl=ja#updates
