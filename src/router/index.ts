@@ -24,6 +24,11 @@ const routes: Array<RouteConfig> = [
     component: () => import(/* webpackChunkName: "about" */ '@/views/shop'),
   },
   {
+    path: '/tree',
+    name: 'TreeView',
+    component: () => import(/* webpackChunkName: "about" */ '@/views/tree-view'),
+  },
+  {
     path: '*',
     redirect: '/home',
   },

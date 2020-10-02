@@ -101,6 +101,10 @@ export default defineComponent({
           title: 'Shop',
           path: '/shop',
         },
+        {
+          title: 'TreeView',
+          path: '/tree',
+        },
       ] as { title: string; path: string }[],
 
       isSignedIn: logic.auth.isSignedIn,
