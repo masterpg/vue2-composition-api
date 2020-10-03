@@ -11,5 +11,5 @@ export {
   CompTreeViewLazyLoadEvent,
   CompTreeViewLazyLoadStatus,
 } from '@/components/tree-view/types'
-export { newNode } from '@/components/tree-view/comp-tree-view-utils'
+export { newCompTreeNode } from '@/components/tree-view/comp-tree-view-utils'
 export { CompTreeCheckboxNode, CompTreeCheckboxNodeData, CompTreeNode, CompTreeNodeIntl, CompTreeView, CompTreeViewIntl }

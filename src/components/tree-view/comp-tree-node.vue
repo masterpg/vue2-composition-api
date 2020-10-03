@@ -726,7 +726,7 @@ namespace CompTreeNode {
       ascendSetBlockForDisplay()
 
       // 子ノードの作成
-      const childNode = util.newNode(childNodeData)
+      const childNode = util.newCompTreeNode(childNodeData)
 
       // ノード挿入位置を決定
       const insertIndex = getInsertIndex(childNode, options)

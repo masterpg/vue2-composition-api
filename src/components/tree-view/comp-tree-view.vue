@@ -353,7 +353,7 @@ namespace CompTreeView {
       }
 
       // ノードの作成
-      const node = util.newNode(nodeData)
+      const node = util.newCompTreeNode(nodeData)
 
       // ノード挿入位置を決定
       const insertIndex = getInsertIndex(node, options)

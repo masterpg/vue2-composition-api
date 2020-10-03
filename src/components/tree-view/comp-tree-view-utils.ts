@@ -25,7 +25,7 @@ interface NodePropertyChangeDetail {
  * ノードを作成します。
  * @param nodeData
  */
-function newNode<N extends CompTreeNode = CompTreeNodeIntl>(nodeData: CompTreeNodeData): N {
+function newCompTreeNode<N extends CompTreeNode = CompTreeNodeIntl>(nodeData: CompTreeNodeData): N {
   // プログラム的にコンポーネントのインスタンスを生成
   // https://css-tricks.com/creating-vue-js-component-instances-programmatically/
   const NodeClass = Vue.extend(nodeData.nodeClass || CompTreeNode.clazz)
@@ -330,6 +330,6 @@ export {
   getElementFrameWidth,
   getElementHeight,
   getElementWidth,
-  newNode,
+  newCompTreeNode,
   toFloat,
 }
