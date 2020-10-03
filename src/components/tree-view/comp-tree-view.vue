@@ -25,7 +25,7 @@
 </template>
 
 <script lang="ts">
-import * as util from '@/components/tree-view/comp-tree-view-utils'
+import * as util from '@/components/tree-view/base'
 import {
   ChildrenSortFunc,
   CompTreeNodeData,
@@ -33,10 +33,10 @@ import {
   CompTreeViewEvent,
   CompTreeViewLazyLoadDoneFunc,
   CompTreeViewLazyLoadEvent,
-} from '@/components/tree-view/types'
+  NodePropertyChangeDetail,
+} from '@/components/tree-view/base'
 import { CompTreeNode, CompTreeNodeIntl } from '@/components/tree-view/comp-tree-node.vue'
 import { SetupContext, computed, defineComponent, getCurrentInstance, reactive, ref } from '@vue/composition-api'
-import { NodePropertyChangeDetail } from '@/components/tree-view/comp-tree-view-utils'
 import Vue from 'vue'
 import debounce from 'lodash/debounce'
 

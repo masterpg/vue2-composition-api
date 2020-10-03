@@ -92,7 +92,7 @@
 import { computed, defineComponent, set } from '@vue/composition-api'
 import { CompLoadingSpinner } from '@/components/loading-spinner'
 import { CompTreeNode } from '@/components/tree-view/comp-tree-node.vue'
-import { CompTreeNodeData } from '@/components/tree-view/types'
+import { CompTreeNodeData } from '@/components/tree-view/base'
 
 //========================================================================
 //

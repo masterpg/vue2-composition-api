@@ -10,6 +10,6 @@ export {
   CompTreeViewLazyLoadDoneFunc,
   CompTreeViewLazyLoadEvent,
   CompTreeViewLazyLoadStatus,
-} from '@/components/tree-view/types'
-export { newCompTreeNode } from '@/components/tree-view/comp-tree-view-utils'
+  newCompTreeNode,
+} from '@/components/tree-view/base'
 export { CompTreeCheckboxNode, CompTreeCheckboxNodeData, CompTreeNode, CompTreeNodeIntl, CompTreeView, CompTreeViewIntl }

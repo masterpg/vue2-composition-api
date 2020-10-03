@@ -1,4 +1,4 @@
-import * as util from '@/components/tree-view/comp-tree-view-utils'
+import * as util from '@/components/tree-view/base'
 import {
   CompTreeCheckboxNode,
   CompTreeNode,

@@ -88,14 +88,8 @@
 </template>
 
 <script lang="ts">
-import * as util from '@/components/tree-view/comp-tree-view-utils'
-import {
-  ChildrenSortFunc,
-  CompTreeNodeData,
-  CompTreeNodeEditData,
-  CompTreeNodeParent,
-  CompTreeViewLazyLoadStatus,
-} from '@/components/tree-view/types'
+import * as util from '@/components/tree-view/base'
+import { ChildrenSortFunc, CompTreeNodeData, CompTreeNodeEditData, CompTreeNodeParent, CompTreeViewLazyLoadStatus } from '@/components/tree-view/base'
 import { CompTreeView, CompTreeViewIntl } from '@/components/tree-view/comp-tree-view.vue'
 import { SetupContext, computed, defineComponent, getCurrentInstance, nextTick, reactive, ref, set } from '@vue/composition-api'
 import { CompLoadingSpinner } from '@/components/loading-spinner'
