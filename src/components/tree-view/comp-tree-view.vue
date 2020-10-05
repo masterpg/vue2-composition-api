@@ -13,14 +13,14 @@
     ref="el"
     class="CompTreeView"
     :style="{ minWidth: minWidth + 'px' }"
+    @node-property-change="allNodesOnNodePropertyChange"
     @node-add="onNodeAdd"
     @before-node-remove="onBeforeNodeRemove"
     @node-remove="onNodeRemove"
-    @node-property-change="allNodesOnNodePropertyChange"
-    @lazy-load="allNodesOnLazyLoad"
-    @open-change="allNodesOnOpenChange"
     @select-change="allNodesOnSelectChange"
     @select="allNodesOnSelectDebounce"
+    @open-change="allNodesOnOpenChange"
+    @lazy-load="allNodesOnLazyLoad"
   ></div>
 </template>
 
@@ -560,8 +560,8 @@ namespace CompTreeView {
      * @param eventName
      */
     function addExtraNodeEventListener(eventName: string): void {
-      childContainer.value!.removeEventListener(eventName, allNodesOnExtraNodeEvent)
-      childContainer.value!.addEventListener(eventName, allNodesOnExtraNodeEvent)
+      childContainer.value!.removeEventListener(eventName, allNodesOnExtraEvent)
+      childContainer.value!.addEventListener(eventName, allNodesOnExtraEvent)
     }
 
     /**
@@ -580,13 +580,29 @@ namespace CompTreeView {
     //----------------------------------------------------------------------
 
     /**
+     * ノードでnode-property-changeイベントが発火した際のリスナです。
+     * @param e
+     */
+    function allNodesOnNodePropertyChange(e: any) {
+      e.stopImmediatePropagation()
+
+      const node = e.detail.node as CompTreeNodeIntl
+      const detail = e.detail as NodePropertyChangeDetail
+
+      if (detail.property === 'value') {
+        delete state.allNodeDict[detail.oldValue]
+        state.allNodeDict[detail.newValue] = node
+      }
+    }
+
+    /**
      * ツリービューにノードが追加された際のリスナです。
      * @param e
      */
     function onNodeAdd(e: any) {
       e.stopImmediatePropagation()
 
-      const node = e.target.__vue__ as CompTreeNodeIntl
+      const node = e.detail.node as CompTreeNodeIntl
       state.allNodeDict[node.value] = node
 
       // ノードが発火する独自イベントの設定
@@ -632,53 +648,13 @@ namespace CompTreeView {
     }
 
     /**
-     * ノードでnode-property-changeイベントが発火した際のリスナです。
-     * @param e
-     */
-    function allNodesOnNodePropertyChange(e: any) {
-      e.stopImmediatePropagation()
-
-      const node = e.target.__vue__ as CompTreeNodeIntl
-      const detail = e.detail as NodePropertyChangeDetail
-
-      if (detail.property === 'value') {
-        delete state.allNodeDict[detail.oldValue]
-        state.allNodeDict[detail.newValue] = node
-      }
-    }
-
-    /**
-     * ノードでnode-loadingイベントが発火した際のリスナです。
-     * @param e
-     */
-    function allNodesOnLazyLoad(e: any) {
-      e.stopImmediatePropagation()
-
-      const node = e.target.__vue__ as CompTreeNodeIntl
-      const done = e.detail.done as CompTreeViewLazyLoadDoneFunc
-
-      ctx.emit('lazy-load', { node, done } as CompTreeViewLazyLoadEvent)
-    }
-
-    /**
-     * ノードでopen-changeイベントが発火した際のリスナです。
-     * @param e
-     */
-    function allNodesOnOpenChange(e: any) {
-      e.stopImmediatePropagation()
-
-      const node = e.target.__vue__ as CompTreeNodeIntl
-      ctx.emit('open-change', { node } as CompTreeViewEvent)
-    }
-
-    /**
      * ノードでselect-changeイベントが発火した際のリスナです。
      * @param e
      */
     function allNodesOnSelectChange(e: any) {
       e.stopImmediatePropagation()
 
-      const node = e.target.__vue__ as CompTreeNodeIntl
+      const node = e.detail.node as CompTreeNodeIntl
       const silent = e.detail.silent
 
       // ノードが選択された場合
@@ -702,7 +678,7 @@ namespace CompTreeView {
     function allNodesOnSelect(e: any) {
       e.stopImmediatePropagation()
 
-      const node = e.target.__vue__ as CompTreeNodeIntl
+      const node = e.detail.node as CompTreeNodeIntl
       const silent = e.detail.silent
 
       !silent && ctx.emit('select', { node } as CompTreeViewEvent)
@@ -711,13 +687,37 @@ namespace CompTreeView {
     const allNodesOnSelectDebounce: (e: any) => void | Promise<void> = debounce(allNodesOnSelect, 0)
 
     /**
+     * ノードでopen-changeイベントが発火した際のリスナです。
+     * @param e
+     */
+    function allNodesOnOpenChange(e: any) {
+      e.stopImmediatePropagation()
+
+      const node = e.detail.node as CompTreeNodeIntl
+      ctx.emit('open-change', { node } as CompTreeViewEvent)
+    }
+
+    /**
+     * ノードでnode-loadingイベントが発火した際のリスナです。
+     * @param e
+     */
+    function allNodesOnLazyLoad(e: any) {
+      e.stopImmediatePropagation()
+
+      const node = e.detail.node as CompTreeNodeIntl
+      const done = e.detail.done as CompTreeViewLazyLoadDoneFunc
+
+      ctx.emit('lazy-load', { node, done } as CompTreeViewLazyLoadEvent)
+    }
+
+    /**
      * ノードが発火する標準のイベントとは別に、独自イベントが発火した際のリスナです。
      * @param e
      */
-    function allNodesOnExtraNodeEvent(e: any) {
+    function allNodesOnExtraEvent(e: any) {
       e.stopImmediatePropagation()
 
-      const node = e.target.__vue__ as CompTreeNodeIntl
+      const node = e.detail.node as CompTreeNodeIntl
       const args = { node }
       if (e.detail) {
         Object.assign(args, e.detail)
@@ -766,14 +766,14 @@ namespace CompTreeView {
       //--------------------------------------------------
 
       minWidth,
+      allNodesOnNodePropertyChange,
       onNodeAdd,
       onBeforeNodeRemove,
       onNodeRemove,
-      allNodesOnNodePropertyChange,
-      allNodesOnLazyLoad,
-      allNodesOnOpenChange,
       allNodesOnSelectChange,
       allNodesOnSelectDebounce,
+      allNodesOnOpenChange,
+      allNodesOnLazyLoad,
     }
   }
 }

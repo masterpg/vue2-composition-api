@@ -355,17 +355,6 @@ namespace CompTreeNode {
      */
     const extraEventNames: string[] = []
 
-    function dispatchExtraEvent<T>(extraEventName: string, detail?: T): void {
-      el.value!.dispatchEvent(
-        new CustomEvent(extraEventName, {
-          bubbles: true,
-          cancelable: true,
-          composed: true,
-          detail,
-        })
-      )
-    }
-
     const hasChildren = computed(() => {
       // 遅延ロードが指定され、かつまだロードされていない場合
       if (lazy.value && lazyLoadStatus.value === 'none') {
@@ -664,6 +653,10 @@ namespace CompTreeNode {
     //
     //----------------------------------------------------------------------
 
+    function dispatchExtraEvent<T>(extraEventName: string, detail?: T): void {
+      util.dispatchExtraEvent(self, extraEventName, detail)
+    }
+
     /**
      * ノードの初期化を行います。
      * @param nodeData
@@ -925,13 +918,7 @@ namespace CompTreeNode {
         }
 
         if (changed) {
-          el.value!.dispatchEvent(
-            new CustomEvent('open-change', {
-              bubbles: true,
-              cancelable: true,
-              composed: true,
-            })
-          )
+          util.dispatchOpenChange(self)
         }
       }
     }
@@ -1239,10 +1226,10 @@ namespace CompTreeNode {
       //--------------------------------------------------
 
       state,
-      dispatchExtraEvent,
       hasChildren,
       init_sub,
       setNodeData_sub,
+      dispatchExtraEvent,
       resetNodePositionInParentDebounce,
       toggleIconOnClick,
       itemContainerOnClick,

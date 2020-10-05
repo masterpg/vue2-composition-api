@@ -171,6 +171,22 @@ function getDescendantDict<N extends CompTreeNode = CompTreeNodeIntl>(node: Comp
 }
 
 /**
+ * ノードのプロパティが変更された旨を通知するイベントを発火します。
+ * @param node
+ * @param detail
+ */
+function dispatchNodePropertyChange(node: CompTreeNodeIntl, detail: NodePropertyChangeDetail): void {
+  node.el.dispatchEvent(
+    new CustomEvent('node-property-change', {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+      detail: { node, ...detail },
+    })
+  )
+}
+
+/**
  * ノードが追加された旨を通知するイベントを発火します。
  * @param node
  */
@@ -180,6 +196,7 @@ function dispatchNodeAdd(node: CompTreeNodeIntl): void {
       bubbles: true,
       cancelable: true,
       composed: true,
+      detail: { node },
     })
   )
 }
@@ -218,64 +235,80 @@ function dispatchNodeRemove(parent: CompTreeViewIntl | CompTreeNodeIntl, child: 
 
 /**
  * ノードの選択が変更された旨を通知するイベントを発火します。
- * @param target
+ * @param node
  * @param silent
  */
-function dispatchSelectChange(target: CompTreeNodeIntl, silent: boolean): void {
-  target.el.dispatchEvent(
+function dispatchSelectChange(node: CompTreeNodeIntl, silent: boolean): void {
+  node.el.dispatchEvent(
     new CustomEvent('select-change', {
       bubbles: true,
       cancelable: true,
       composed: true,
-      detail: { silent },
+      detail: { node, silent },
     })
   )
 }
 
 /**
  * ノードの選択された旨を通知するイベントを発火します。
- * @param target
+ * @param node
  * @param silent
  */
-function dispatchSelect(target: CompTreeNodeIntl, silent: boolean): void {
-  target.el.dispatchEvent(
+function dispatchSelect(node: CompTreeNodeIntl, silent: boolean): void {
+  node.el.dispatchEvent(
     new CustomEvent('select', {
       bubbles: true,
       cancelable: true,
       composed: true,
-      detail: { silent },
+      detail: { node, silent },
     })
   )
 }
 
 /**
- * ノードのプロパティが変更された旨を通知するイベントを発火します。
- * @param target
- * @param detail
+ * ノードの開閉が変更された旨を通知するイベントを発火します。
+ * @param node
  */
-function dispatchNodePropertyChange(target: CompTreeNodeIntl, detail: NodePropertyChangeDetail): void {
-  target.el.dispatchEvent(
-    new CustomEvent('node-property-change', {
+function dispatchOpenChange(node: CompTreeNodeIntl): void {
+  node.el.dispatchEvent(
+    new CustomEvent('open-change', {
       bubbles: true,
       cancelable: true,
       composed: true,
-      detail,
+      detail: { node },
     })
   )
 }
 
 /**
  * ノードの遅延ローディングが開始された旨を通知するイベントを発火します。
- * @param target
+ * @param node
  * @param done
  */
-function dispatchLazyLoad(target: CompTreeNodeIntl, done: CompTreeViewLazyLoadDoneFunc): void {
-  target.el.dispatchEvent(
+function dispatchLazyLoad(node: CompTreeNodeIntl, done: CompTreeViewLazyLoadDoneFunc): void {
+  node.el.dispatchEvent(
     new CustomEvent('lazy-load', {
       bubbles: true,
       cancelable: true,
       composed: true,
-      detail: { done },
+      detail: { node, done },
+    })
+  )
+}
+
+/**
+ * ノードの開閉が変更された旨を通知するイベントを発火します。
+ * @param node
+ * @param extraEventName
+ * @param detail
+ */
+function dispatchExtraEvent<T>(node: CompTreeNodeIntl, extraEventName: string, detail?: T): void {
+  node.el.dispatchEvent(
+    new CustomEvent(extraEventName, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+      detail: { node, ...detail },
     })
   )
 }
@@ -418,10 +451,12 @@ export {
   CompTreeViewLazyLoadStatus,
   NodePropertyChangeDetail,
   dispatchBeforeNodeRemove,
+  dispatchExtraEvent,
   dispatchLazyLoad,
   dispatchNodeAdd,
   dispatchNodePropertyChange,
   dispatchNodeRemove,
+  dispatchOpenChange,
   dispatchSelect,
   dispatchSelectChange,
   getDescendantDict,
