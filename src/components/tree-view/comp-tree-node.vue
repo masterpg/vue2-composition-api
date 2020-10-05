@@ -107,9 +107,47 @@ type _CompTreeNode = CompTreeNode<CompTreeNode>
 
 interface CompTreeNode<FAMILY_NODE extends CompTreeNode = _CompTreeNode> extends Vue {
   /**
-   * 自身が最年長のノードかを示すフラグです。
+   * ラベルです。
    */
-  readonly isEldest: boolean
+  label: string
+
+  /**
+   * ノードを特定するための値です。
+   */
+  value: string
+
+  /**
+   * アイテムの開閉です。
+   */
+  readonly opened: boolean
+
+  /**
+   * 選択されているか否かです。
+   */
+  selected: boolean
+
+  /**
+   * 選択状態を設定します。
+   * @param selected 選択状態を指定
+   * @param silent 選択系イベントを発火させたくない場合はtrueを指定
+   */
+  setSelected(selected: boolean, silent: boolean): void
+
+  /**
+   * 選択不可フラグです。
+   * true: 選択不可, false: 選択可
+   */
+  unselectable: boolean
+
+  /**
+   * 親ノードです。
+   */
+  readonly parent: FAMILY_NODE | null
+
+  /**
+   * 子ノードです。
+   */
+  readonly children: FAMILY_NODE[]
 
   /**
    * アイコン名です。
@@ -124,42 +162,6 @@ interface CompTreeNode<FAMILY_NODE extends CompTreeNode = _CompTreeNode> extends
   iconColor: string
 
   /**
-   * アイテムの開閉です。
-   */
-  readonly opened: boolean
-
-  /**
-   * ラベルです。
-   */
-  label: string
-
-  /**
-   * ノードを特定するための値です。
-   */
-  value: string
-
-  /**
-   * 選択不可フラグです。
-   * true: 選択不可, false: 選択可
-   */
-  unselectable: boolean
-
-  /**
-   * 選択されているか否かです。
-   */
-  selected: boolean
-
-  /**
-   * 親ノードです。
-   */
-  readonly parent: FAMILY_NODE | null
-
-  /**
-   * 子ノードです。
-   */
-  readonly children: FAMILY_NODE[]
-
-  /**
    * 子ノードの読み込みを遅延ロードするか否かです。
    */
   lazy: boolean
@@ -168,6 +170,11 @@ interface CompTreeNode<FAMILY_NODE extends CompTreeNode = _CompTreeNode> extends
    * 子ノード読み込みの遅延ロード状態です。
    */
   lazyLoadStatus: CompTreeViewLazyLoadStatus
+
+  /**
+   * 自身が最年長のノードかを示すフラグです。
+   */
+  readonly isEldest: boolean
 
   /**
    * ノードの最小幅です。
@@ -183,6 +190,21 @@ interface CompTreeNode<FAMILY_NODE extends CompTreeNode = _CompTreeNode> extends
    * 子ノードの並びを決めるソート関数を設定します。
    */
   setSortFunc<N extends CompTreeNode = FAMILY_NODE>(value: ChildrenSortFunc<N> | null): void
+
+  /**
+   * 本ノードが所属するツリービューを取得します。
+   */
+  getTreeView(): CompTreeViewIntl | null
+
+  /**
+   * ルートノードを取得します。
+   */
+  getRootNode<N extends CompTreeNode = FAMILY_NODE>(): N
+
+  /**
+   * 子孫ノードを取得します。
+   */
+  getDescendants<N extends CompTreeNode = FAMILY_NODE>(): N[]
 
   /**
    * ノードを編集するためのデータを設定します。
@@ -217,13 +239,6 @@ interface CompTreeNode<FAMILY_NODE extends CompTreeNode = _CompTreeNode> extends
   removeChild(childNode: FAMILY_NODE): void
 
   /**
-   * 選択状態を設定します。
-   * @param selected 選択状態を指定
-   * @param silent 選択系イベントを発火させたくない場合はtrueを指定
-   */
-  setSelected(selected: boolean, silent: boolean): void
-
-  /**
    * 全ての子ノードを削除します。
    */
   removeAllChildren(): void
@@ -245,21 +260,6 @@ interface CompTreeNode<FAMILY_NODE extends CompTreeNode = _CompTreeNode> extends
    * @param animated
    */
   close(animated?: boolean): void
-
-  /**
-   * 本ノードが所属するツリービューを取得します。
-   */
-  getTreeView(): CompTreeViewIntl | null
-
-  /**
-   * ルートノードを取得します。
-   */
-  getRootNode<N extends CompTreeNode = FAMILY_NODE>(): N
-
-  /**
-   * 子孫ノードを取得します。
-   */
-  getDescendants<N extends CompTreeNode = FAMILY_NODE>(): N[]
 }
 
 type _CompTreeNodeIntl = CompTreeNodeIntl<CompTreeNodeIntl>
@@ -273,11 +273,13 @@ interface CompTreeNodeIntl<FAMILY_NODE extends CompTreeNodeIntl = _CompTreeNodeI
 
   init(nodeData: CompTreeNodeData): void
 
-  setIsEldest(value: boolean): void
-
   setParent(value: FAMILY_NODE | null): void
 
   setTreeView(value: CompTreeViewIntl | null): void
+
+  setIsEldest(value: boolean): void
+
+  removeChildIntl(childNode: FAMILY_NODE, isDispatchEvent: boolean): boolean
 
   refreshChildContainerHeight(): void
 
@@ -286,8 +288,6 @@ interface CompTreeNodeIntl<FAMILY_NODE extends CompTreeNodeIntl = _CompTreeNodeI
   getChildrenContainerHeight(base: FAMILY_NODE): number
 
   getInsertIndex(newNode: FAMILY_NODE, options?: { insertIndex?: number | null }): number
-
-  removeChildIntl(childNode: FAMILY_NODE, isDispatchEvent: boolean): boolean
 
   ascendSetBlockForDisplay(): void
 
@@ -355,6 +355,17 @@ namespace CompTreeNode {
      */
     const extraEventNames: string[] = []
 
+    function dispatchExtraEvent<T>(extraEventName: string, detail?: T): void {
+      el.value!.dispatchEvent(
+        new CustomEvent(extraEventName, {
+          bubbles: true,
+          cancelable: true,
+          composed: true,
+          detail,
+        })
+      )
+    }
+
     const hasChildren = computed(() => {
       // 遅延ロードが指定され、かつまだロードされていない場合
       if (lazy.value && lazyLoadStatus.value === 'none') {
@@ -373,27 +384,6 @@ namespace CompTreeNode {
     //  Properties
     //
     //----------------------------------------------------------------------
-
-    const isEldest = computed(() => state.isEldest)
-    const setIsEldest: CompTreeNodeIntl['setIsEldest'] = value => (state.isEldest = value)
-
-    const icon = computed({
-      get: () => state.nodeData.icon!,
-      set: value => {
-        state.nodeData.icon = value
-        resetNodePositionInParentDebounce(self)
-      },
-    })
-
-    const iconColor = computed({
-      get: () => state.nodeData.iconColor!,
-      set: value => {
-        state.nodeData.iconColor = value
-        resetNodePositionInParentDebounce(self)
-      },
-    })
-
-    const opened = computed(() => state.nodeData.opened!)
 
     const label = computed({
       get: () => state.nodeData.label,
@@ -419,6 +409,21 @@ namespace CompTreeNode {
       },
     })
 
+    const opened = computed(() => state.nodeData.opened!)
+
+    const selected = computed({
+      get: () => state.nodeData.selected!,
+      set: value => {
+        setSelectedIntl(value, { silent: false })
+        resetNodePositionInParentDebounce(self)
+      },
+    })
+
+    const setSelected: CompTreeNodeIntl['setSelected'] = (selected, silent) => {
+      setSelectedIntl(selected, { silent })
+      resetNodePositionInParentDebounce(self)
+    }
+
     const unselectable = computed({
       get: () => state.nodeData.unselectable!,
       set: value => {
@@ -430,17 +435,29 @@ namespace CompTreeNode {
       },
     })
 
-    const selected = computed({
-      get: () => state.nodeData.selected!,
+    const parent = computed(() => state.parent)
+
+    const setParent: CompTreeNodeIntl['setParent'] = (value: CompTreeNodeIntl | null) => {
+      state.parent = value
+    }
+
+    const children = computed(() => state.children)
+
+    const icon = computed({
+      get: () => state.nodeData.icon!,
       set: value => {
-        setSelectedIntl(value, { silent: false })
+        state.nodeData.icon = value
         resetNodePositionInParentDebounce(self)
       },
     })
 
-    const parent = computed(() => state.parent)
-
-    const children = computed(() => state.children)
+    const iconColor = computed({
+      get: () => state.nodeData.iconColor!,
+      set: value => {
+        state.nodeData.iconColor = value
+        resetNodePositionInParentDebounce(self)
+      },
+    })
 
     const lazy = computed({
       get: () => state.nodeData.lazy,
@@ -458,10 +475,36 @@ namespace CompTreeNode {
       },
     })
 
+    const isEldest = computed(() => state.isEldest)
+    const setIsEldest: CompTreeNodeIntl['setIsEldest'] = value => (state.isEldest = value)
+
     const minWidth = computed(() => {
       setMinWidth()
       return state.minWidth
     })
+
+    function setMinWidth(): void {
+      // ノードコンテナの幅を取得
+      let nodeContainerWidth = 0
+      for (const el of Array.from(nodeContainer.value!.children)) {
+        nodeContainerWidth += util.getElementWidth(el)
+      }
+      nodeContainerWidth += util.getElementFrameWidth(nodeContainer.value!)
+
+      // 子ノードの中で最大幅のものを取得
+      let childContainerWidth = 0
+      if (opened.value) {
+        for (const child of children.value) {
+          if (childContainerWidth < child.minWidth) {
+            childContainerWidth = child.minWidth
+            childContainerWidth += util.getElementFrameWidth(childContainer.value!)
+          }
+        }
+      }
+
+      // 上記で取得したノードコンテナ幅と子ノードコンテナ幅を比較し、大きい方を採用する
+      state.minWidth = nodeContainerWidth >= childContainerWidth ? nodeContainerWidth : childContainerWidth
+    }
 
     //----------------------------------------------------------------------
     //
@@ -484,40 +527,30 @@ namespace CompTreeNode {
       }
     }
 
-    /**
-     * ノードの初期化を行います。
-     * @param nodeData
-     */
-    const init: CompTreeNodeIntl['init'] = nodeData => {
-      // 任意項目は値が設定されていないとリアクティブにならないのでここで初期化
-      set(nodeData, 'icon', nodeData.icon || '')
-      set(nodeData, 'iconColor', nodeData.iconColor || '')
-      set(nodeData, 'opened', Boolean(nodeData.opened))
-      set(nodeData, 'unselectable', Boolean(nodeData.unselectable))
-      set(nodeData, 'selected', Boolean(nodeData.selected))
-      set(nodeData, 'lazy', Boolean(nodeData.lazy))
-      set(nodeData, 'lazyLoadStatus', nodeData.lazyLoadStatus || 'none')
-      set(nodeData, 'sortFunc', nodeData.sortFunc || null)
-      state.nodeData = nodeData
-
-      // サブクラスで必要な処理を実行
-      init_sub.value?.(nodeData)
-
-      setSelectedIntl(state.nodeData.selected!, { initializing: true })
+    const getTreeView: CompTreeNodeIntl['getTreeView'] = () => {
+      const rootNode = getRootNode()
+      return rootNode.treeView
     }
 
-    /**
-     * このコンポーネントを拡張したサブコンポーネントで`init()`に追加で処理が必要な場合、
-     * その追加処理を記述するためのプレースホルダー関数になります。
-     */
-    const init_sub = {
-      _value: null as ((nodeData: CompTreeNodeData) => void) | null,
-      get value() {
-        return this._value
-      },
-      set value(v: ((nodeData: CompTreeNodeData) => void) | null) {
-        this._value = v
-      },
+    const getRootNode: CompTreeNodeIntl['getRootNode'] = () => {
+      if (parent.value) {
+        return parent.value.getRootNode()
+      }
+      return self as any
+    }
+
+    const getDescendants: CompTreeNodeIntl['getDescendants'] = () => {
+      return util.getDescendants(self)
+    }
+
+    const setTreeView: CompTreeNodeIntl['setTreeView'] = value => {
+      // 自身がルートノードではない場合にツリービューが設定されようとした場合
+      // ※ツリービューの設定はルートノードのみに行われます。
+      if (parent.value) {
+        throw new Error(`A 'treeView' is about to be set when it is not the root node.`)
+      }
+
+      state.treeView = value
     }
 
     const setNodeData: CompTreeNodeIntl['setNodeData'] = editData => {
@@ -611,26 +644,6 @@ namespace CompTreeNode {
       }
     }
 
-    const getTreeView: CompTreeNodeIntl['getTreeView'] = () => {
-      const rootNode = getRootNode()
-      return rootNode.treeView
-    }
-
-    const setTreeView: CompTreeNodeIntl['setTreeView'] = value => {
-      // 自身がルートノードではない場合にツリービューが設定されようとした場合
-      // ※ツリービューの設定はルートノードのみに行われます。
-      if (parent.value) {
-        throw new Error(`A 'treeView' is about to be set when it is not the root node.`)
-      }
-
-      state.treeView = value
-    }
-
-    const setSelected: CompTreeNodeIntl['setSelected'] = (selected, silent) => {
-      setSelectedIntl(selected, { silent })
-      resetNodePositionInParentDebounce(self)
-    }
-
     const toggle: CompTreeNodeIntl['toggle'] = (animated = true) => {
       toggleIntl(!opened.value, animated)
     }
@@ -645,95 +658,101 @@ namespace CompTreeNode {
       toggleIntl(false, animated)
     }
 
-    const getRootNode: CompTreeNodeIntl['getRootNode'] = () => {
-      if (parent.value) {
-        return parent.value.getRootNode()
-      }
-      return self as any
-    }
-
-    const getDescendants: CompTreeNodeIntl['getDescendants'] = () => {
-      return util.getDescendants(self)
-    }
-
     //----------------------------------------------------------------------
     //
     //  Internal methods
     //
     //----------------------------------------------------------------------
 
-    const setParent: CompTreeNodeIntl['setParent'] = (value: CompTreeNodeIntl | null) => {
-      state.parent = value
+    /**
+     * ノードの初期化を行います。
+     * @param nodeData
+     */
+    const init: CompTreeNodeIntl['init'] = nodeData => {
+      // 任意項目は値が設定されていないとリアクティブにならないのでここで初期化
+      set(nodeData, 'icon', nodeData.icon || '')
+      set(nodeData, 'iconColor', nodeData.iconColor || '')
+      set(nodeData, 'opened', Boolean(nodeData.opened))
+      set(nodeData, 'unselectable', Boolean(nodeData.unselectable))
+      set(nodeData, 'selected', Boolean(nodeData.selected))
+      set(nodeData, 'lazy', Boolean(nodeData.lazy))
+      set(nodeData, 'lazyLoadStatus', nodeData.lazyLoadStatus || 'none')
+      set(nodeData, 'sortFunc', nodeData.sortFunc || null)
+      state.nodeData = nodeData
+
+      // サブクラスで必要な処理を実行
+      init_sub.value?.(nodeData)
+
+      setSelectedIntl(state.nodeData.selected!, { initializing: true })
     }
 
-    function setMinWidth(): void {
-      // ノードコンテナの幅を取得
-      let nodeContainerWidth = 0
-      for (const el of Array.from(nodeContainer.value!.children)) {
-        nodeContainerWidth += util.getElementWidth(el)
-      }
-      nodeContainerWidth += util.getElementFrameWidth(nodeContainer.value!)
+    /**
+     * このコンポーネントを拡張したサブコンポーネントで`init()`に追加で処理が必要な場合、
+     * その追加処理を記述するためのプレースホルダー関数になります。
+     */
+    const init_sub = {
+      _value: null as ((nodeData: CompTreeNodeData) => void) | null,
+      get value() {
+        return this._value
+      },
+      set value(v: ((nodeData: CompTreeNodeData) => void) | null) {
+        this._value = v
+      },
+    }
 
-      // 子ノードの中で最大幅のものを取得
-      let childContainerWidth = 0
-      if (opened.value) {
-        for (const child of children.value) {
-          if (childContainerWidth < child.minWidth) {
-            childContainerWidth = child.minWidth
-            childContainerWidth += util.getElementFrameWidth(childContainer.value!)
+    /**
+     * selectedの設定を行います。
+     * @param value selectedの設定値を指定
+     * @param options
+     * <ul>
+     *   <li>initializing 初期化中か否かを指定</li>
+     *   <li>silent 選択イベントを発火したくない場合はtrueを指定</li>
+     * </ul>
+     */
+    function setSelectedIntl(value: boolean, options: { initializing?: boolean; silent?: boolean } = {}): void {
+      const initializing = typeof options.initializing === 'boolean' ? options.initializing : false
+      const silent = typeof options.silent === 'boolean' ? options.silent : false
+      const changed = state.nodeData.selected !== value
+
+      // 選択不可の場合
+      if (unselectable.value) {
+        // 選択解除に変更された場合
+        // ※選択不可ノードを選択状態へ変更しようとしてもこのブロックには入らない
+        if (changed && !value) {
+          state.nodeData.selected = false
+          !initializing && util.dispatchSelectChange(self, silent)
+        }
+      }
+      // 選択可能な場合
+      else {
+        // 選択状態が変更された場合
+        if (changed) {
+          // 遅延ロードが必要な場合
+          // ※遅延ロードが指定され、かつまだロードが開始されていない場合
+          if (lazy.value && lazyLoadStatus.value === 'none') {
+            startLazyLoad(() => {
+              state.nodeData.selected = value
+              // ①select-change
+              // > ノードが選択された場合:
+              // >   このイベントをCompTreeViewが受け取り、そこでノード選択が｢再度｣行われ、③selectが発火される
+              !initializing && util.dispatchSelectChange(self, silent)
+            })
+          }
+          // 遅延ロードの必要がない場合
+          else {
+            state.nodeData.selected = value
+            // ②select-change
+            // > ノードが選択された場合:
+            // >   このイベントをCompTreeViewが受け取り、そこでノード選択が｢再度｣行われ、③selectが発火される
+            !initializing && util.dispatchSelectChange(self, silent)
           }
         }
-      }
-
-      // 上記で取得したノードコンテナ幅と子ノードコンテナ幅を比較し、大きい方を採用する
-      state.minWidth = nodeContainerWidth >= childContainerWidth ? nodeContainerWidth : childContainerWidth
-    }
-
-    const sortChildren: CompTreeNodeIntl['sortChildren'] = () => {
-      const sortFunc = getSortFunc()
-      if (!sortFunc) return
-
-      children.value.sort(sortFunc)
-      for (const child of children.value) {
-        childContainer.value!.appendChild(child.el)
-      }
-    }
-
-    const resetNodePositionInParent: CompTreeViewIntl['resetNodePositionInParent'] = node => {
-      if (node.parent) {
-        // 親ノードまたはツリービューにソート関数が指定されていない場合、何もしない
-        const sortFunc = node.parent.getSortFunc()
-        if (!sortFunc) return
-
-        const insertIndex = node.parent.getInsertIndex(node)
-        const currentIndex = node.parent.children.indexOf(node)
-        if (insertIndex === currentIndex) return
-
-        if (insertIndex < currentIndex) {
-          const afterNode = node.parent.childContainer.children[insertIndex]
-          node.parent.childContainer.insertBefore(node.el, afterNode)
-        } else if (insertIndex > currentIndex) {
-          const refNode = node.parent.childContainer.children[insertIndex]
-          node.parent.childContainer.insertBefore(node.el, refNode.nextSibling)
+        // 選択状態が変更されなかった場合
+        else {
+          // ③select
+          value && !initializing && util.dispatchSelect(self, silent)
         }
-        node.parent.children.sort(sortFunc)
-      } else {
-        const treeView = getTreeView()
-        treeView?.resetNodePositionInParent(node)
       }
-    }
-
-    const resetNodePositionInParentDebounce = debounce(resetNodePositionInParent, 0)
-
-    function dispatchExtraEvent<T>(extraEventName: string, detail?: T): void {
-      el.value!.dispatchEvent(
-        new CustomEvent(extraEventName, {
-          bubbles: true,
-          cancelable: true,
-          composed: true,
-          detail,
-        })
-      )
     }
 
     function addChildByData(childNodeData: CompTreeNodeData, options?: { insertIndex?: number | null }): CompTreeNodeIntl {
@@ -859,27 +878,32 @@ namespace CompTreeNode {
       return childNode
     }
 
-    const getInsertIndex: CompTreeNodeIntl['getInsertIndex'] = (newNode: CompTreeNodeIntl, options) => {
-      const sortFunc = getSortFunc()
-      // 親ノードまたはツリービューにソート関数が指定されている場合
-      if (sortFunc) {
-        const newChildren: CompTreeNodeIntl[] = []
-        if (children.value.includes(newNode)) {
-          newChildren.push(...children.value)
-        } else {
-          newChildren.push(...children.value, newNode)
-        }
-        newChildren.sort(sortFunc)
-        return newChildren.indexOf(newNode)
+    /**
+     * 子ノードを削除します。
+     * @param childNode
+     * @param isDispatchEvent 削除イベントを発火するか否かを指定
+     * @return 削除された場合はtrue, 削除対象のノードがなく削除が行われなかった場合はfalse
+     */
+    const removeChildIntl: CompTreeNodeIntl['removeChildIntl'] = (childNode: CompTreeNodeIntl, isDispatchEvent) => {
+      const index = children.value.indexOf(childNode)
+      if (index >= 0) {
+        isDispatchEvent && util.dispatchBeforeNodeRemove(self, childNode)
+        childNode.setParent(null)
+        children.value.splice(index, 1)
+        removeChildFromContainer(childNode)
+        refreshChildContainerHeight()
+        isDispatchEvent && util.dispatchNodeRemove(self, childNode)
+        return true
       }
-      // 挿入位置が指定された場合
-      else if (typeof options?.insertIndex === 'number') {
-        return options.insertIndex
-      }
-      // 何も指定されていなかった場合
-      else {
-        return children.value.length
-      }
+      return false
+    }
+
+    /**
+     * 子コンテナからノードを削除します。
+     * @param node
+     */
+    function removeChildFromContainer(node: CompTreeNodeIntl): void {
+      childContainer.value!.removeChild(node.el)
     }
 
     function toggleIntl(newOpened: boolean, animated: boolean): void {
@@ -909,6 +933,86 @@ namespace CompTreeNode {
             })
           )
         }
+      }
+    }
+
+    /**
+     * 子ノードを取得するための遅延ロードを開始します。
+     * @param completed 遅延ロードが完了した際に実行されるコールバック関数を指定
+     */
+    function startLazyLoad(completed: () => void): void {
+      lazyLoadStatus.value = 'loading'
+      util.dispatchLazyLoad(self, () => {
+        anime({
+          targets: lazyLoadIcon.value!,
+          opacity: '0',
+          duration: 150,
+          easing: 'easeOutCubic',
+          complete: () => {
+            lazyLoadIcon.value!.style.opacity = '1'
+            lazyLoadStatus.value = 'loaded'
+            completed()
+          },
+        })
+      })
+    }
+
+    const sortChildren: CompTreeNodeIntl['sortChildren'] = () => {
+      const sortFunc = getSortFunc()
+      if (!sortFunc) return
+
+      children.value.sort(sortFunc)
+      for (const child of children.value) {
+        childContainer.value!.appendChild(child.el)
+      }
+    }
+
+    const resetNodePositionInParent: CompTreeViewIntl['resetNodePositionInParent'] = node => {
+      if (node.parent) {
+        // 親ノードまたはツリービューにソート関数が指定されていない場合、何もしない
+        const sortFunc = node.parent.getSortFunc()
+        if (!sortFunc) return
+
+        const insertIndex = node.parent.getInsertIndex(node)
+        const currentIndex = node.parent.children.indexOf(node)
+        if (insertIndex === currentIndex) return
+
+        if (insertIndex < currentIndex) {
+          const afterNode = node.parent.childContainer.children[insertIndex]
+          node.parent.childContainer.insertBefore(node.el, afterNode)
+        } else if (insertIndex > currentIndex) {
+          const refNode = node.parent.childContainer.children[insertIndex]
+          node.parent.childContainer.insertBefore(node.el, refNode.nextSibling)
+        }
+        node.parent.children.sort(sortFunc)
+      } else {
+        const treeView = getTreeView()
+        treeView?.resetNodePositionInParent(node)
+      }
+    }
+
+    const resetNodePositionInParentDebounce = debounce(resetNodePositionInParent, 0)
+
+    const getInsertIndex: CompTreeNodeIntl['getInsertIndex'] = (newNode: CompTreeNodeIntl, options) => {
+      const sortFunc = getSortFunc()
+      // 親ノードまたはツリービューにソート関数が指定されている場合
+      if (sortFunc) {
+        const newChildren: CompTreeNodeIntl[] = []
+        if (children.value.includes(newNode)) {
+          newChildren.push(...children.value)
+        } else {
+          newChildren.push(...children.value, newNode)
+        }
+        newChildren.sort(sortFunc)
+        return newChildren.indexOf(newNode)
+      }
+      // 挿入位置が指定された場合
+      else if (typeof options?.insertIndex === 'number') {
+        return options.insertIndex
+      }
+      // 何も指定されていなかった場合
+      else {
+        return children.value.length
       }
     }
 
@@ -995,34 +1099,6 @@ namespace CompTreeNode {
     }
 
     /**
-     * 子ノードを削除します。
-     * @param childNode
-     * @param isDispatchEvent 削除イベントを発火するか否かを指定
-     * @return 削除された場合はtrue, 削除対象のノードがなく削除が行われなかった場合はfalse
-     */
-    const removeChildIntl: CompTreeNodeIntl['removeChildIntl'] = (childNode: CompTreeNodeIntl, isDispatchEvent) => {
-      const index = children.value.indexOf(childNode)
-      if (index >= 0) {
-        isDispatchEvent && util.dispatchBeforeNodeRemove(self, childNode)
-        childNode.setParent(null)
-        children.value.splice(index, 1)
-        removeChildFromContainer(childNode)
-        refreshChildContainerHeight()
-        isDispatchEvent && util.dispatchNodeRemove(self, childNode)
-        return true
-      }
-      return false
-    }
-
-    /**
-     * 子コンテナからノードを削除します。
-     * @param node
-     */
-    function removeChildFromContainer(node: CompTreeNodeIntl): void {
-      childContainer.value!.removeChild(node.el)
-    }
-
-    /**
      * 子コンテナへノードを挿入します。
      * @param node 追加するノード
      * @param insertIndex ノード挿入位置
@@ -1042,82 +1118,6 @@ namespace CompTreeNode {
         const afterNode = childContainer.value!.children[insertIndex]
         childContainer.value!.insertBefore(node.$el, afterNode)
       }
-    }
-
-    /**
-     * selectedの設定を行います。
-     * @param value selectedの設定値を指定
-     * @param options
-     * <ul>
-     *   <li>initializing 初期化中か否かを指定</li>
-     *   <li>silent 選択イベントを発火したくない場合はtrueを指定</li>
-     * </ul>
-     */
-    function setSelectedIntl(value: boolean, options: { initializing?: boolean; silent?: boolean } = {}): void {
-      const initializing = typeof options.initializing === 'boolean' ? options.initializing : false
-      const silent = typeof options.silent === 'boolean' ? options.silent : false
-      const changed = state.nodeData.selected !== value
-
-      // 選択不可の場合
-      if (unselectable.value) {
-        // 選択解除に変更された場合
-        // ※選択不可ノードを選択状態へ変更しようとしてもこのブロックには入らない
-        if (changed && !value) {
-          state.nodeData.selected = false
-          !initializing && util.dispatchSelectChange(self, silent)
-        }
-      }
-      // 選択可能な場合
-      else {
-        // 選択状態が変更された場合
-        if (changed) {
-          // 遅延ロードが必要な場合
-          // ※遅延ロードが指定され、かつまだロードが開始されていない場合
-          if (lazy.value && lazyLoadStatus.value === 'none') {
-            startLazyLoad(() => {
-              state.nodeData.selected = value
-              // ①select-change
-              // > ノードが選択された場合:
-              // >   このイベントをCompTreeViewが受け取り、そこでノード選択が｢再度｣行われ、③selectが発火される
-              !initializing && util.dispatchSelectChange(self, silent)
-            })
-          }
-          // 遅延ロードの必要がない場合
-          else {
-            state.nodeData.selected = value
-            // ②select-change
-            // > ノードが選択された場合:
-            // >   このイベントをCompTreeViewが受け取り、そこでノード選択が｢再度｣行われ、③selectが発火される
-            !initializing && util.dispatchSelectChange(self, silent)
-          }
-        }
-        // 選択状態が変更されなかった場合
-        else {
-          // ③select
-          value && !initializing && util.dispatchSelect(self, silent)
-        }
-      }
-    }
-
-    /**
-     * 子ノードを取得するための遅延ロードを開始します。
-     * @param completed 遅延ロードが完了した際に実行されるコールバック関数を指定
-     */
-    function startLazyLoad(completed: () => void): void {
-      lazyLoadStatus.value = 'loading'
-      util.dispatchLazyLoad(self, () => {
-        anime({
-          targets: lazyLoadIcon.value!,
-          opacity: '0',
-          duration: 150,
-          easing: 'easeOutCubic',
-          complete: () => {
-            lazyLoadIcon.value!.style.opacity = '1'
-            lazyLoadStatus.value = 'loaded'
-            completed()
-          },
-        })
-      })
     }
 
     /**
@@ -1181,41 +1181,40 @@ namespace CompTreeNode {
       //  public
       //--------------------------------------------------
 
-      isEldest,
-      icon,
-      iconColor,
-      opened,
       label,
       value,
-      unselectable,
+      opened,
       selected,
+      setSelected,
+      unselectable,
       parent,
       children,
+      icon,
+      iconColor,
       lazy,
       lazyLoadStatus,
+      isEldest,
       minWidth,
       getSortFunc,
       setSortFunc,
+      getTreeView,
+      getRootNode,
+      getDescendants,
       setNodeData,
       addChild,
       removeChild,
       removeAllChildren,
-      setSelected,
       toggle,
       open,
       close,
-      getTreeView,
-      getRootNode,
-      getDescendants,
 
       //--------------------------------------------------
       //  internal
       //--------------------------------------------------
 
       treeView,
+      extraEventNames,
       init,
-      init_sub,
-      setNodeData_sub,
       setParent,
       setTreeView,
       setIsEldest,
@@ -1240,9 +1239,10 @@ namespace CompTreeNode {
       //--------------------------------------------------
 
       state,
-      extraEventNames,
-      hasChildren,
       dispatchExtraEvent,
+      hasChildren,
+      init_sub,
+      setNodeData_sub,
       resetNodePositionInParentDebounce,
       toggleIconOnClick,
       itemContainerOnClick,

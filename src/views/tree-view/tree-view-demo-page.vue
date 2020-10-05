@@ -23,7 +23,7 @@
 
 <template>
   <div class="TreeViewDemoPage layout vertical">
-    <comp-tree-view ref="treeView" class="tree-view" @select-change="treeViewOnSelectChange" @checked-change="treeViewOnCheckedChange" />
+    <CompTreeView ref="treeView" class="tree-view" @select-change="treeViewOnSelectChange" @checked-change="treeViewOnCheckedChange" />
     <div class="layout vertical app-mt-20">
       <!-- 編集 -->
       <div class="layout horizontal operation-row">

@@ -58,6 +58,25 @@ interface CompTreeView<FAMILY_NODE extends CompTreeNode = CompTreeNode> extends 
   selectedNode: FAMILY_NODE | null
 
   /**
+   * 指定されたノードの選択状態を設定します。
+   * @param value ノードを特定するための値を指定
+   * @param selected 選択状態を指定
+   * @param silent 選択系イベントを発火したくない場合はtrueを指定
+   */
+  setSelectedNode(value: string, selected: boolean, silent?: boolean): void
+
+  /**
+   * ノードを特定するためのvalueと一致するノードを取得します。
+   * @param value ノードを特定するための値
+   */
+  getNode<N extends CompTreeNode = FAMILY_NODE>(value: string): N | undefined
+
+  /**
+   * ツリービューの全ノードをツリー構造から平坦化した配列形式で取得します。
+   */
+  getAllNodes<N extends CompTreeNode = FAMILY_NODE>(): N[]
+
+  /**
    * 子ノードの並びを決めるソート関数を取得します。
    */
   getSortFunc<N extends CompTreeNode = FAMILY_NODE>(): ChildrenSortFunc<N> | null
@@ -66,14 +85,6 @@ interface CompTreeView<FAMILY_NODE extends CompTreeNode = CompTreeNode> extends 
    * 子ノードの並びを決めるソート関数を設定します。
    */
   setSortFunc<N extends CompTreeNode = FAMILY_NODE>(value: ChildrenSortFunc<N> | null): void
-
-  /**
-   * 指定されたノードの選択状態を設定します。
-   * @param value ノードを特定するための値を指定
-   * @param selected 選択状態を指定
-   * @param silent 選択系イベントを発火したくない場合はtrueを指定
-   */
-  setSelectedNode(value: string, selected: boolean, silent?: boolean): void
 
   /**
    * 指定されたノードデータからノードツリーを構築します。
@@ -118,17 +129,6 @@ interface CompTreeView<FAMILY_NODE extends CompTreeNode = CompTreeNode> extends 
    * 全てのノードを削除します。
    */
   removeAllNodes(): void
-
-  /**
-   * ノードを特定するためのvalueと一致するノードを取得します。
-   * @param value ノードを特定するための値
-   */
-  getNode<N extends CompTreeNode = FAMILY_NODE>(value: string): N | undefined
-
-  /**
-   * ツリービューの全ノードをツリー構造から平坦化した配列形式で取得します。
-   */
-  getAllNodes<N extends CompTreeNode = FAMILY_NODE>(): N[]
 }
 
 interface CompTreeViewIntl<FAMILY_NODE extends CompTreeNodeIntl = CompTreeNodeIntl>
@@ -271,6 +271,19 @@ namespace CompTreeView {
     //
     //----------------------------------------------------------------------
 
+    const getNode: CompTreeViewIntl['getNode'] = value => {
+      return state.allNodeDict[value] as any
+    }
+
+    const getAllNodes: CompTreeViewIntl['getAllNodes'] = () => {
+      const result: CompTreeNodeIntl[] = []
+      for (const child of state.children) {
+        result.push(child)
+        result.push(...util.getDescendants(child))
+      }
+      return result as any
+    }
+
     const getSortFunc: CompTreeViewIntl['getSortFunc'] = () => {
       return state.sortFunc
     }
@@ -354,19 +367,6 @@ namespace CompTreeView {
       for (const node of Object.values(state.allNodeDict)) {
         removeNode(node.value)
       }
-    }
-
-    const getNode: CompTreeViewIntl['getNode'] = value => {
-      return state.allNodeDict[value] as any
-    }
-
-    const getAllNodes: CompTreeViewIntl['getAllNodes'] = () => {
-      const result: CompTreeNodeIntl[] = []
-      for (const child of state.children) {
-        result.push(child)
-        result.push(...util.getDescendants(child))
-      }
-      return result as any
     }
 
     //----------------------------------------------------------------------
@@ -740,14 +740,14 @@ namespace CompTreeView {
       children,
       selectedNode,
       setSelectedNode,
+      getNode,
+      getAllNodes,
       getSortFunc,
       setSortFunc,
       buildTree,
       addNode,
       removeNode,
       removeAllNodes,
-      getNode,
-      getAllNodes,
 
       //--------------------------------------------------
       //  internal
