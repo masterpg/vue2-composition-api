@@ -14,7 +14,7 @@
 <script lang="ts">
 import { defineComponent, reactive, watch } from '@vue/composition-api'
 
-interface CustomInputProps {
+interface Props {
   value: string
 }
 
@@ -26,37 +26,42 @@ interface CustomInputProps {
  * ・`value`プロパティの値は直接変更できない。例: props.value = 'hoge'
  * ・`value`プロパティの値を変更するには`input`イベントに新しい値を設定してイベントを発火する必要がある。
  */
-export default defineComponent<CustomInputProps>({
-  name: 'CustomInput',
+namespace CustomInput {
+  export const clazz = defineComponent({
+    name: 'CustomInput',
 
-  props: {
-    value: { type: String, default: '' },
-  },
+    props: {
+      value: { type: String, default: '' },
+    },
 
-  setup(props, context) {
-    const state = reactive({
-      inputValue: '',
-    })
+    setup(props: Props, context) {
+      const state = reactive({
+        inputValue: '',
+      })
 
-    watch(
-      () => state.inputValue,
-      (newValue, oldValue) => {
-        console.log(`①: props.value: "${props.value}", state.inputValue: "${state.inputValue}"`)
-        context.emit('input', state.inputValue)
+      watch(
+        () => state.inputValue,
+        (newValue, oldValue) => {
+          console.log(`①: props.value: "${props.value}", state.inputValue: "${state.inputValue}"`)
+          context.emit('input', state.inputValue)
+        }
+      )
+
+      watch(
+        () => props.value,
+        (newValue, oldValue) => {
+          console.log(`②: props.value: "${props.value}", state.inputValue: "${state.inputValue}"`)
+          state.inputValue = props.value
+        }
+      )
+
+      return {
+        state,
       }
-    )
+    },
+  })
+}
 
-    watch(
-      () => props.value,
-      (newValue, oldValue) => {
-        console.log(`②: props.value: "${props.value}", state.inputValue: "${state.inputValue}"`)
-        state.inputValue = props.value
-      }
-    )
-
-    return {
-      state,
-    }
-  },
-})
+export default CustomInput.clazz
+export { CustomInput }
 </script>

@@ -58,7 +58,7 @@
     <div class="layout horizontal center app-my-16">
       <q-input class="custom-input" v-model="state.customInputValue" label="AbcPage Value" dense />
       <span class="space-x" />
-      <custom-input v-model="state.customInputValue" class="flex-3" />
+      <CustomInput v-model="state.customInputValue" class="flex-3" />
     </div>
     <div class="layout horizontal center app-my-16">
       <div class="layout horizontal center">
@@ -66,18 +66,20 @@
         <input type="checkbox" v-model="state.customChecked" />
       </div>
       <span class="space-x" />
-      <custom-checkbox v-model="state.customChecked" />
+      <CustomCheckbox v-model="state.customChecked" />
     </div>
   </q-card>
 </template>
 
 <script lang="ts">
 import { computed, defineComponent, onMounted, reactive, ref, watch, watchEffect } from '@vue/composition-api'
+import { CustomCheckbox } from '@/views/abc/custom-checkbox.vue'
+import { CustomInput } from '@/views/abc/custom-input.vue'
 import { GreetMessage } from '@/views/abc/greet-message.vue'
 import { injectLogic } from '@/logic'
 import { useI18n } from '@/i18n'
 
-interface AbcPageProps {
+interface Props {
   propA: string
   propB: string
 }
@@ -87,128 +89,127 @@ interface Post {
   times: number
 }
 
-export default defineComponent<AbcPageProps>({
-  name: 'AbcPage',
+namespace AbcPage {
+  export const clazz = defineComponent({
+    name: 'AbcPage',
 
-  components: {
-    GreetMessage: require('@/views/abc/greet-message').default,
-    CustomInput: require('@/views/abc/custom-input.vue').default,
-    CustomCheckbox: require('@/views/abc/custom-checkbox.vue').default,
-  },
+    components: {
+      GreetMessage: GreetMessage.clazz,
+      CustomInput: CustomInput.clazz,
+      CustomCheckbox: CustomCheckbox.clazz,
+    },
 
-  props: {
-    propA: { type: String, default: 'prop value A' },
-    propB: { type: String, default: 'prop value B' },
-  },
+    props: {
+      propA: { type: String, default: 'prop value A' },
+      propB: { type: String, default: 'prop value B' },
+    },
 
-  setup(props, context) {
-    //----------------------------------------------------------------------
-    //
-    //  Variables
-    //
-    //----------------------------------------------------------------------
+    setup(props: Props, context) {
+      //----------------------------------------------------------------------
+      //
+      //  Variables
+      //
+      //----------------------------------------------------------------------
 
-    const state = reactive({
-      message: '',
-      post: {
+      const logic = injectLogic()
+      const { t } = useI18n()
+
+      const greetMessage = ref<GreetMessage>()
+
+      const state = reactive({
         message: '',
-        times: 0,
-      } as Post,
-      customInputValue: '',
-      customChecked: false,
-    })
+        post: {
+          message: '',
+          times: 0,
+        } as Post,
+        customInputValue: '',
+        customChecked: false,
+      })
 
-    const logic = injectLogic()
+      const reversedMessage = computed(() =>
+        state.message
+          .split('')
+          .reverse()
+          .join('')
+      )
 
-    const { t } = useI18n()
+      const doubleReversedYourName = computed(() =>
+        reversedMessage.value
+          .split('')
+          .reverse()
+          .join('')
+      )
 
-    const reversedMessage = computed(() =>
-      state.message
-        .split('')
-        .reverse()
-        .join('')
-    )
+      const isSignIn = logic.auth.isSignedIn
 
-    const doubleReversedYourName = computed(() =>
-      reversedMessage.value
-        .split('')
-        .reverse()
-        .join('')
-    )
+      const greetTimes = computed(() => greetMessage.value?.times)
 
-    const isSignIn = logic.auth.isSignedIn
+      //----------------------------------------------------------------------
+      //
+      //  Lifecycle hooks
+      //
+      //----------------------------------------------------------------------
 
-    const greetTimes = computed(() => greetMessage.value?.times)
+      onMounted(() => {
+        state.message = 'onMounted'
+      })
 
-    //--------------------------------------------------
-    //  Elements
-    //--------------------------------------------------
+      //----------------------------------------------------------------------
+      //
+      //  Event listeners
+      //
+      //----------------------------------------------------------------------
 
-    const greetMessage = ref<GreetMessage>()
-
-    //----------------------------------------------------------------------
-    //
-    //  Lifecycle hooks
-    //
-    //----------------------------------------------------------------------
-
-    onMounted(() => {
-      state.message = 'onMounted'
-    })
-
-    //----------------------------------------------------------------------
-    //
-    //  Event listeners
-    //
-    //----------------------------------------------------------------------
-
-    const greetButtonOnClick = () => {
-      const message = greetMessage.value!.greet()
-      console.log(message)
-    }
-
-    const postButtonOnClick = () => {
-      state.post.times++
-    }
-
-    watchEffect(() => {
-      state.post.message = state.message
-    })
-
-    watch(
-      () => state.post,
-      (newValue, oldValue) => {
-        console.log(
-          `Changed post:\n  oldValue: { message: "${newValue.message}", times: ${newValue.times} }\n  newValue: { message: "${newValue.message}", times: ${newValue.times} }`
-        )
-      },
-      { deep: true }
-    )
-
-    watch(
-      () => state.post.times,
-      (newValue, oldValue) => {
-        console.log('Changed post.times:\n  oldValue:', oldValue, '\n  newValue:', newValue)
+      const greetButtonOnClick = () => {
+        const message = greetMessage.value!.greet()
+        console.log(message)
       }
-    )
 
-    //----------------------------------------------------------------------
-    //
-    //  Result
-    //
-    //----------------------------------------------------------------------
+      const postButtonOnClick = () => {
+        state.post.times++
+      }
 
-    return {
-      state,
-      greetMessage,
-      reversedMessage,
-      doubleReversedYourName,
-      isSignIn,
-      greetTimes,
-      greetButtonOnClick,
-      postButtonOnClick,
-      t,
-    }
-  },
-})
+      watchEffect(() => {
+        state.post.message = state.message
+      })
+
+      watch(
+        () => state.post,
+        (newValue, oldValue) => {
+          console.log(
+            `Changed post:\n  oldValue: { message: "${newValue.message}", times: ${newValue.times} }\n  newValue: { message: "${newValue.message}", times: ${newValue.times} }`
+          )
+        },
+        { deep: true }
+      )
+
+      watch(
+        () => state.post.times,
+        (newValue, oldValue) => {
+          console.log('Changed post.times:\n  oldValue:', oldValue, '\n  newValue:', newValue)
+        }
+      )
+
+      //----------------------------------------------------------------------
+      //
+      //  Result
+      //
+      //----------------------------------------------------------------------
+
+      return {
+        t,
+        state,
+        greetMessage,
+        reversedMessage,
+        doubleReversedYourName,
+        isSignIn,
+        greetTimes,
+        greetButtonOnClick,
+        postButtonOnClick,
+      }
+    },
+  })
+}
+
+export default AbcPage.clazz
 </script>

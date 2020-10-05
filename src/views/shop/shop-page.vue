@@ -105,86 +105,88 @@ import { computed, defineComponent, onMounted, reactive } from '@vue/composition
 import { Loading } from 'quasar'
 import { useI18n } from '@/i18n'
 
-interface ShopPageProps {}
+namespace ShopPage {
+  export const clazz = defineComponent({
+    name: 'ShopPage',
 
-export default defineComponent<ShopPageProps>({
-  name: 'ShopPage',
+    setup(props, context) {
+      //----------------------------------------------------------------------
+      //
+      //  Variables
+      //
+      //----------------------------------------------------------------------
 
-  setup(props, context) {
-    //----------------------------------------------------------------------
-    //
-    //  Variables
-    //
-    //----------------------------------------------------------------------
+      const logic = injectLogic()
+      const { t } = useI18n()
 
-    const logic = injectLogic()
-    const { t } = useI18n()
+      // @ts-ignore
+      // TS7022: 'state' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.
+      const state = reactive({
+        isSignedIn: logic.auth.isSignedIn,
 
-    // @ts-ignore
-    // TS7022: 'state' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.
-    const state = reactive({
-      isSignedIn: logic.auth.isSignedIn,
+        products: logic.shop.products,
 
-      products: logic.shop.products,
+        cartItems: logic.shop.cartItems,
 
-      cartItems: logic.shop.cartItems,
+        cartTotalPrice: logic.shop.cartTotalPrice,
 
-      cartTotalPrice: logic.shop.cartTotalPrice,
+        cartIsEmpty: computed(() => {
+          return state.cartItems.length === 0
+        }),
+      })
 
-      cartIsEmpty: computed<boolean>(() => {
-        return state.cartItems.length === 0
-      }),
-    })
+      //----------------------------------------------------------------------
+      //
+      //  Lifecycle hooks
+      //
+      //----------------------------------------------------------------------
 
-    //----------------------------------------------------------------------
-    //
-    //  Lifecycle hooks
-    //
-    //----------------------------------------------------------------------
+      onMounted(async () => {
+        Loading.show()
+        await logic.shop.fetchProducts()
+        Loading.hide()
+      })
 
-    onMounted(async () => {
-      Loading.show()
-      await logic.shop.fetchProducts()
-      Loading.hide()
-    })
+      //----------------------------------------------------------------------
+      //
+      //  Event listeners
+      //
+      //----------------------------------------------------------------------
 
-    //----------------------------------------------------------------------
-    //
-    //  Event listeners
-    //
-    //----------------------------------------------------------------------
+      async function addButtonOnClick(product: Product) {
+        Loading.show()
+        await logic.shop.addItemToCart(product.id)
+        Loading.hide()
+      }
 
-    async function addButtonOnClick(product: Product) {
-      Loading.show()
-      await logic.shop.addItemToCart(product.id)
-      Loading.hide()
-    }
+      async function removeButtonOnClick(cartItem: CartItem) {
+        Loading.show()
+        await logic.shop.removeItemFromCart(cartItem.productId)
+        Loading.hide()
+      }
 
-    async function removeButtonOnClick(cartItem: CartItem) {
-      Loading.show()
-      await logic.shop.removeItemFromCart(cartItem.productId)
-      Loading.hide()
-    }
+      async function checkoutButtonOnClick() {
+        Loading.show()
+        await logic.shop.checkout()
+        Loading.hide()
+      }
 
-    async function checkoutButtonOnClick() {
-      Loading.show()
-      await logic.shop.checkout()
-      Loading.hide()
-    }
+      //----------------------------------------------------------------------
+      //
+      //  Event listeners
+      //
+      //----------------------------------------------------------------------
 
-    //----------------------------------------------------------------------
-    //
-    //  Event listeners
-    //
-    //----------------------------------------------------------------------
+      return {
+        t,
+        state,
+        addButtonOnClick,
+        removeButtonOnClick,
+        checkoutButtonOnClick,
+      }
+    },
+  })
+}
 
-    return {
-      t,
-      state,
-      addButtonOnClick,
-      removeButtonOnClick,
-      checkoutButtonOnClick,
-    }
-  },
-})
+export default ShopPage.clazz
 </script>

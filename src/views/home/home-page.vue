@@ -25,24 +25,28 @@
 import { defineComponent, onMounted, ref } from '@vue/composition-api'
 import { HelloWorld } from '@/components/hello-world'
 
-export default defineComponent({
-  name: 'HomePage',
+namespace HomePage {
+  export const clazz = defineComponent({
+    name: 'HomePage',
 
-  components: {
-    HelloWorld: require('@/components/hello-world').default,
-  },
+    components: {
+      HelloWorld: HelloWorld.clazz,
+    },
 
-  setup() {
-    const helloWorld = ref<HelloWorld>()
+    setup() {
+      const helloWorld = ref<HelloWorld>()
 
-    onMounted(() => {
-      const message = helloWorld.value!.hello()
-      console.log(message)
-    })
+      onMounted(() => {
+        const message = helloWorld.value!.hello()
+        console.log(message)
+      })
 
-    return {
-      helloWorld,
-    }
-  },
-})
+      return {
+        helloWorld,
+      }
+    },
+  })
+}
+
+export default HomePage.clazz
 </script>
