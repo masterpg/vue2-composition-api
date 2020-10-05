@@ -26,96 +26,99 @@
 </template>
 
 <script lang="ts">
-import { ComputedRef, computed, defineComponent, reactive } from '@vue/composition-api'
+import { computed, defineComponent, reactive } from '@vue/composition-api'
 import { injectLogic } from '@/logic'
 import { useI18n } from '@/i18n'
 
-export type GreetMessage = GreetMessageFuncs & Vue
-
-interface GreetMessageFuncs {
-  readonly times: ComputedRef<number>
-  greet: () => string
-}
-
-interface GreetMessageProps {
+interface Props {
   message: string
 }
 
-export default defineComponent<GreetMessageProps, GreetMessageFuncs>({
-  name: 'GreetMessage',
+interface GreetMessage extends Vue, Readonly<Props> {
+  readonly times: number
+  greet: () => string
+}
 
-  props: {
-    message: { type: String, required: true },
-  },
+namespace GreetMessage {
+  export const clazz = defineComponent({
+    name: 'GreetMessage',
 
-  setup(props) {
-    //----------------------------------------------------------------------
-    //
-    //  Variables
-    //
-    //----------------------------------------------------------------------
+    props: {
+      message: { type: String, required: true },
+    },
 
-    const logic = injectLogic()
-    const { t, d } = useI18n()
+    setup(props) {
+      //----------------------------------------------------------------------
+      //
+      //  Variables
+      //
+      //----------------------------------------------------------------------
 
-    const state = reactive({
-      isSignIn: logic.auth.isSignedIn,
-      user: logic.auth.user,
-      times: 0,
-    })
+      const logic = injectLogic()
+      const { t, d } = useI18n()
 
-    //----------------------------------------------------------------------
-    //
-    //  Properties
-    //
-    //----------------------------------------------------------------------
+      const state = reactive({
+        isSignIn: logic.auth.isSignedIn,
+        user: logic.auth.user,
+        times: 0,
+      })
 
-    const times = computed(() => {
-      return state.times
-    })
+      //----------------------------------------------------------------------
+      //
+      //  Properties
+      //
+      //----------------------------------------------------------------------
 
-    //----------------------------------------------------------------------
-    //
-    //  Methods
-    //
-    //----------------------------------------------------------------------
+      const times = computed(() => {
+        return state.times
+      })
 
-    const greet: GreetMessageFuncs['greet'] = () => {
-      logic.auth.validateSignedIn()
+      //----------------------------------------------------------------------
+      //
+      //  Methods
+      //
+      //----------------------------------------------------------------------
 
-      const message = `Hi ${state.user.displayName}, ${props.message}.`
-      state.times++
-      return message
-    }
+      const greet: GreetMessage['greet'] = () => {
+        logic.auth.validateSignedIn()
 
-    //----------------------------------------------------------------------
-    //
-    //  Event listeners
-    //
-    //----------------------------------------------------------------------
-
-    const signInOrOutButtonOnClick = async () => {
-      if (state.isSignIn) {
-        await logic.auth.signOut()
-      } else {
-        await logic.auth.signIn()
+        const message = `Hi ${state.user.displayName}, ${props.message}.`
+        state.times++
+        return message
       }
-    }
 
-    //----------------------------------------------------------------------
-    //
-    //  Result
-    //
-    //----------------------------------------------------------------------
+      //----------------------------------------------------------------------
+      //
+      //  Event listeners
+      //
+      //----------------------------------------------------------------------
 
-    return {
-      t,
-      d,
-      state,
-      times,
-      greet,
-      signInOrOutButtonOnClick,
-    }
-  },
-})
+      const signInOrOutButtonOnClick = async () => {
+        if (state.isSignIn) {
+          await logic.auth.signOut()
+        } else {
+          await logic.auth.signIn()
+        }
+      }
+
+      //----------------------------------------------------------------------
+      //
+      //  Result
+      //
+      //----------------------------------------------------------------------
+
+      return {
+        times,
+        greet,
+        t,
+        d,
+        state,
+        signInOrOutButtonOnClick,
+      }
+    },
+  })
+}
+
+export default GreetMessage.clazz
+export { GreetMessage }
 </script>

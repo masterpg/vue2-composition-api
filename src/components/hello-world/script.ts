@@ -1,11 +1,15 @@
 import { SetupContext } from '@vue/composition-api'
 
-interface HelloWorldProps {
+interface Props {
   title: string
 }
 
-function setupHelloWorld(props: HelloWorldProps, context: SetupContext) {
-  const hello = () => {
+interface HelloWorld extends Vue, Readonly<Props> {
+  hello(): string
+}
+
+function setup(props: Props, context: SetupContext) {
+  const hello: HelloWorld['hello'] = () => {
     return `Hello World! ${props.title}.`
   }
 
@@ -14,8 +18,4 @@ function setupHelloWorld(props: HelloWorldProps, context: SetupContext) {
   }
 }
 
-type HelloWorldFuncs = ReturnType<typeof setupHelloWorld>
-
-type HelloWorld = HelloWorldFuncs & Vue
-
-export { HelloWorld, HelloWorldProps, HelloWorldFuncs, setupHelloWorld }
+export { HelloWorld, setup }

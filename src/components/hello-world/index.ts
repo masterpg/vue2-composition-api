@@ -1,17 +1,22 @@
-import { HelloWorld, HelloWorldFuncs, HelloWorldProps, setupHelloWorld } from '@/components/hello-world/script'
+import { HelloWorld as _HelloWorld, setup } from '@/components/hello-world/script'
 import HelloWorldTemplate from '@/components/hello-world/template.vue'
 import { defineComponent } from '@vue/composition-api'
 
-export default defineComponent<HelloWorldProps, HelloWorldFuncs>({
-  name: 'HelloWorld',
+type HelloWorld = _HelloWorld
 
-  mixins: [HelloWorldTemplate],
+namespace HelloWorld {
+  export const clazz = defineComponent({
+    name: 'HelloWorld',
 
-  props: {
-    title: { type: String },
-  },
+    mixins: [HelloWorldTemplate],
 
-  setup: setupHelloWorld,
-})
+    props: {
+      title: { type: String },
+    },
 
+    setup,
+  })
+}
+
+export default HelloWorld.clazz
 export { HelloWorld }
