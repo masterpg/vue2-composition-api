@@ -58,6 +58,16 @@ interface CompTreeView<FAMILY_NODE extends CompTreeNode = CompTreeNode> extends 
   selectedNode: FAMILY_NODE | null
 
   /**
+   * 子ノードの並びを決めるソート関数を取得します。
+   */
+  getSortFunc<N extends CompTreeNode = FAMILY_NODE>(): ChildrenSortFunc<N> | null
+
+  /**
+   * 子ノードの並びを決めるソート関数を設定します。
+   */
+  setSortFunc<N extends CompTreeNode = FAMILY_NODE>(value: ChildrenSortFunc<N> | null): void
+
+  /**
    * 指定されたノードの選択状態を設定します。
    * @param value ノードを特定するための値を指定
    * @param selected 選択状態を指定
@@ -74,7 +84,7 @@ interface CompTreeView<FAMILY_NODE extends CompTreeNode = CompTreeNode> extends 
    *   <li>insertIndex: ノード挿入位置。ノードに`sortFunc`が設定されている場合、この値は無視されます。</li>
    * </ul>
    */
-  buildTree(nodeDataList: CompTreeNodeData[], options?: { sortFunc?: ChildrenSortFunc; insertIndex?: number | null }): void
+  buildTree(nodeDataList: CompTreeNodeData[], options?: { sortFunc?: ChildrenSortFunc<any>; insertIndex?: number | null }): void
 
   /**
    * ノードを追加します。
@@ -121,7 +131,9 @@ interface CompTreeView<FAMILY_NODE extends CompTreeNode = CompTreeNode> extends 
   getAllNodes<N extends CompTreeNode = FAMILY_NODE>(): N[]
 }
 
-interface CompTreeViewIntl<FAMILY_NODE extends CompTreeNode = CompTreeNodeIntl> extends CompTreeView<FAMILY_NODE>, CompTreeNodeParent<FAMILY_NODE> {}
+interface CompTreeViewIntl<FAMILY_NODE extends CompTreeNodeIntl = CompTreeNodeIntl>
+  extends CompTreeView<FAMILY_NODE>,
+    CompTreeNodeParent<FAMILY_NODE> {}
 
 //========================================================================
 //
@@ -163,18 +175,20 @@ namespace CompTreeView {
     const childContainer = el
 
     const state = reactive({
-      children: [] as CompTreeNode[],
-
+      children: [] as CompTreeNodeIntl[],
       /**
        * ツリービューが管理する全ノードのマップです。
        * key: ノードを特定するための値, value: ノード
        */
-      allNodeDict: {} as { [key: string]: CompTreeNode },
-
-      selectedNode: null as CompTreeNode | null,
-
-      sortFunc: null as ChildrenSortFunc | null,
-    })
+      allNodeDict: {},
+      selectedNode: null,
+      sortFunc: null,
+    }) as {
+      children: CompTreeNodeIntl[]
+      allNodeDict: { [key: string]: CompTreeNodeIntl }
+      selectedNode: CompTreeNodeIntl | null
+      sortFunc: ChildrenSortFunc<any> | null
+    }
 
     /**
      * ツリービューの最小幅です。
@@ -188,8 +202,6 @@ namespace CompTreeView {
       }
       return result + util.getElementFrameWidth(childContainer.value!)
     })
-
-    const sortFunc = computed(() => state.sortFunc)
 
     //----------------------------------------------------------------------
     //
@@ -259,6 +271,22 @@ namespace CompTreeView {
     //
     //----------------------------------------------------------------------
 
+    const getSortFunc: CompTreeViewIntl['getSortFunc'] = () => {
+      return state.sortFunc
+    }
+
+    const setSortFunc: CompTreeViewIntl['setSortFunc'] = value => {
+      const _sortChildren = (parent: CompTreeNodeParent) => {
+        parent.sortChildren()
+        for (const child of parent.children) {
+          _sortChildren(child)
+        }
+      }
+
+      state.sortFunc = value
+      _sortChildren(self)
+    }
+
     const buildTree: CompTreeViewIntl['buildTree'] = (nodeDataList, options) => {
       state.sortFunc = options?.sortFunc ?? null
       let insertIndex = options?.insertIndex
@@ -272,12 +300,12 @@ namespace CompTreeView {
     }
 
     const addNode: CompTreeViewIntl['addNode'] = (
-      node: CompTreeNodeData | CompTreeNode,
+      node: CompTreeNodeData | CompTreeNodeIntl,
       options?: { parent?: string; insertIndex?: number | null }
     ) => {
       options = options || {}
 
-      let result!: CompTreeNode
+      let result!: CompTreeNodeIntl
       const childType = node instanceof Vue ? 'Node' : 'Data'
 
       // 親が指定されている場合
@@ -287,7 +315,7 @@ namespace CompTreeView {
         if (!parentNode) {
           throw new Error(`The parent node '${options.parent}' does not exist.`)
         }
-        result = parentNode.addChild(node as CompTreeNode, options)
+        result = parentNode.addChild(node as CompTreeNodeIntl, options)
       }
       // 親が指定されていない場合
       else {
@@ -333,10 +361,10 @@ namespace CompTreeView {
     }
 
     const getAllNodes: CompTreeViewIntl['getAllNodes'] = () => {
-      const result: CompTreeNode[] = []
+      const result: CompTreeNodeIntl[] = []
       for (const child of state.children) {
-        result.push(child as CompTreeNode)
-        result.push(...util.getDescendants(child as CompTreeNode))
+        result.push(child)
+        result.push(...util.getDescendants(child))
       }
       return result as any
     }
@@ -347,7 +375,7 @@ namespace CompTreeView {
     //
     //----------------------------------------------------------------------
 
-    function addNodeByData(nodeData: CompTreeNodeData, options?: { insertIndex?: number | null }): CompTreeNode {
+    function addNodeByData(nodeData: CompTreeNodeData, options?: { insertIndex?: number | null }): CompTreeNodeIntl {
       if (getNode(nodeData.value)) {
         throw new Error(`The node '${nodeData.value}' already exists.`)
       }
@@ -373,7 +401,7 @@ namespace CompTreeView {
       return node
     }
 
-    function addNodeByNode(node: CompTreeNodeIntl, options?: { insertIndex?: number | null }): CompTreeNode {
+    function addNodeByNode(node: CompTreeNodeIntl, options?: { insertIndex?: number | null }): CompTreeNodeIntl {
       // 追加ノードの親が自身のツリービューの場合
       // ※自身のツリービューの子として追加ノードが既に存在する場合
       if (!node.parent && node.treeView === self) {
@@ -418,16 +446,51 @@ namespace CompTreeView {
       return node
     }
 
-    function getInsertIndex(newNode: CompTreeNode, options?: { insertIndex?: number | null }): number {
+    const sortChildren: CompTreeNodeIntl['sortChildren'] = () => {
+      const sortFunc = getSortFunc()
+      if (!sortFunc) return
+
+      children.value.sort(sortFunc)
+      for (const child of children.value) {
+        childContainer.value!.appendChild(child.el)
+      }
+
+      restIsEldest()
+    }
+
+    const resetNodePositionInParent: CompTreeViewIntl['resetNodePositionInParent'] = node => {
+      // ツリービューにソート関数が指定されていない場合、何もしない
+      const sortFunc = getSortFunc()
+      if (!sortFunc) return
+
+      const insertIndex = getInsertIndex(node)
+      const currentIndex = children.value.indexOf(node)
+      if (insertIndex === currentIndex) return
+
+      if (insertIndex < currentIndex) {
+        const afterNode = childContainer.value!.children[insertIndex]
+        childContainer.value!.insertBefore(node.el, afterNode)
+      } else if (insertIndex > currentIndex) {
+        const refNode = childContainer.value!.children[insertIndex]
+        childContainer.value!.insertBefore(node.el, refNode.nextSibling)
+      }
+      children.value.sort(sortFunc)
+
+      // 最年長ノードフラグを再設定
+      restIsEldest()
+    }
+
+    function getInsertIndex(newNode: CompTreeNodeIntl, options?: { insertIndex?: number | null }): number {
+      const sortFunc = getSortFunc()
       // ソート関数が指定されている場合
-      if (typeof sortFunc.value === 'function') {
-        const newChildren: CompTreeNode[] = []
+      if (sortFunc) {
+        const newChildren: CompTreeNodeIntl[] = []
         if (children.value.includes(newNode)) {
-          newChildren.push(...(children.value as CompTreeNode[]))
+          newChildren.push(...children.value)
         } else {
-          newChildren.push(...(children.value as CompTreeNode[]), newNode)
+          newChildren.push(...children.value, newNode)
         }
-        newChildren.sort(sortFunc.value)
+        newChildren.sort(sortFunc)
         return newChildren.indexOf(newNode)
       }
       // 挿入位置が指定された場合
@@ -506,7 +569,7 @@ namespace CompTreeView {
      */
     function restIsEldest(): void {
       state.children.forEach((node, index) => {
-        node.isEldest = index === 0
+        node.setIsEldest(index === 0)
       })
     }
 
@@ -543,7 +606,7 @@ namespace CompTreeView {
     function onBeforeNodeRemove(e: any) {
       e.stopImmediatePropagation()
 
-      const node = e.detail.node as CompTreeNode
+      const node = e.detail.node as CompTreeNodeIntl
 
       const nodeDescendants = [node, ...node.getDescendants()]
       for (const iNode of nodeDescendants) {
@@ -561,7 +624,7 @@ namespace CompTreeView {
     function onNodeRemove(e: any) {
       e.stopImmediatePropagation()
 
-      const node = e.detail.node as CompTreeNode
+      const node = e.detail.node as CompTreeNodeIntl
       for (const descendant of util.getDescendants(node)) {
         delete state.allNodeDict[descendant.value]
       }
@@ -575,7 +638,7 @@ namespace CompTreeView {
     function allNodesOnNodePropertyChange(e: any) {
       e.stopImmediatePropagation()
 
-      const node = e.target.__vue__ as CompTreeNode
+      const node = e.target.__vue__ as CompTreeNodeIntl
       const detail = e.detail as NodePropertyChangeDetail
 
       if (detail.property === 'value') {
@@ -591,7 +654,7 @@ namespace CompTreeView {
     function allNodesOnLazyLoad(e: any) {
       e.stopImmediatePropagation()
 
-      const node = e.target.__vue__ as CompTreeNode
+      const node = e.target.__vue__ as CompTreeNodeIntl
       const done = e.detail.done as CompTreeViewLazyLoadDoneFunc
 
       ctx.emit('lazy-load', { node, done } as CompTreeViewLazyLoadEvent)
@@ -604,7 +667,7 @@ namespace CompTreeView {
     function allNodesOnOpenChange(e: any) {
       e.stopImmediatePropagation()
 
-      const node = e.target.__vue__ as CompTreeNode
+      const node = e.target.__vue__ as CompTreeNodeIntl
       ctx.emit('open-change', { node } as CompTreeViewEvent)
     }
 
@@ -615,7 +678,7 @@ namespace CompTreeView {
     function allNodesOnSelectChange(e: any) {
       e.stopImmediatePropagation()
 
-      const node = e.target.__vue__ as CompTreeNode
+      const node = e.target.__vue__ as CompTreeNodeIntl
       const silent = e.detail.silent
 
       // ノードが選択された場合
@@ -639,7 +702,7 @@ namespace CompTreeView {
     function allNodesOnSelect(e: any) {
       e.stopImmediatePropagation()
 
-      const node = e.target.__vue__ as CompTreeNode
+      const node = e.target.__vue__ as CompTreeNodeIntl
       const silent = e.detail.silent
 
       !silent && ctx.emit('select', { node } as CompTreeViewEvent)
@@ -654,7 +717,7 @@ namespace CompTreeView {
     function allNodesOnExtraNodeEvent(e: any) {
       e.stopImmediatePropagation()
 
-      const node = e.target.__vue__ as CompTreeNode
+      const node = e.target.__vue__ as CompTreeNodeIntl
       const args = { node }
       if (e.detail) {
         Object.assign(args, e.detail)
@@ -677,6 +740,8 @@ namespace CompTreeView {
       children,
       selectedNode,
       setSelectedNode,
+      getSortFunc,
+      setSortFunc,
       buildTree,
       addNode,
       removeNode,
@@ -693,7 +758,8 @@ namespace CompTreeView {
       //
       el,
       childContainer,
-      sortFunc,
+      sortChildren,
+      resetNodePositionInParent,
 
       //--------------------------------------------------
       //  private

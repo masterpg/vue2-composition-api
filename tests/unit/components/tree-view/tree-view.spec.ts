@@ -100,7 +100,7 @@ function verifyParentChildRelation(treeView: CompTreeViewIntl, node: CompTreeNod
     expect(child.parent).toBe(node)
     // ノードのコンテナに子ノードが存在することを検証
     const containerChildren = Array.from(node.childContainer.children)
-    expect(containerChildren[i]).toBe(child.$el)
+    expect(containerChildren[i]).toBe(child.el)
     // 孫ノードの検証
     verifyParentChildRelation(treeView, child)
   }
@@ -208,7 +208,7 @@ describe('CompTreeView', () => {
       expect(node2.isEldest).not.toBeTruthy()
       expect(node2.selected).toBeFalsy()
 
-      expect(treeView.$el).toMatchSnapshot()
+      expect(treeView.el).toMatchSnapshot()
     })
 
     it('先頭に挿入', () => {
@@ -631,7 +631,7 @@ describe('CompTreeView', () => {
       expect(actual).toBe(node1)
       expect(treeView.getNode(node1.value)).toBeUndefined()
       expect(treeView.children.length).toBe(treeViewNodesLength - 1)
-      expect(Array.from(treeView.childContainer.children).includes(node1.$el)).not.toBeTruthy()
+      expect(Array.from(treeView.childContainer.children).includes(node1.el)).not.toBeTruthy()
 
       for (const descendant of node1Descendants) {
         expect(treeView.getNode((descendant as any).value)).toBeUndefined()
@@ -1428,7 +1428,7 @@ describe('CompTreeNode', () => {
       expect(treeView.getNode(node1_1.value)).toBeUndefined()
       expect(node1.children.length).toBe(node1ChildrenLength - 1)
       expect(node1.children.includes(node1_1)).not.toBeTruthy()
-      expect(Array.from(node1.childContainer.children).includes(node1_1.$el)).not.toBeTruthy()
+      expect(Array.from(node1.childContainer.children).includes(node1_1.el)).not.toBeTruthy()
 
       for (const descendant of node1_1Descendants) {
         expect(treeView.getNode((descendant as any).value)).toBeUndefined()
@@ -1505,7 +1505,7 @@ describe('CompTreeNode', () => {
       // node1_1を削除
       treeView.removeNode(node1_1.value)
       expect(node1.children.includes(node1_1)).not.toBeTruthy()
-      expect(Array.from(node1.childContainer.children).includes(node1_1.$el)).not.toBeTruthy()
+      expect(Array.from(node1.childContainer.children).includes(node1_1.el)).not.toBeTruthy()
 
       // 存在しないノード(削除したnode1_1)をさらに削除
       // (何も起こらない)
@@ -1791,72 +1791,237 @@ describe('CompTreeNode', () => {
     })
   })
 
+  describe('子ノードの並び順', () => {
+    let treeView: CompTreeViewIntl
+
+    describe('ソート関数', () => {
+      beforeEach(() => {
+        const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+        treeView = wrapper.vm
+        treeView.buildTree([
+          {
+            label: 'node1',
+            value: 'node1',
+            children: [
+              { label: 'node1_1', value: 'node1_1' },
+              { label: 'node1_2', value: 'node1_2' },
+              { label: 'node1_3', value: 'node1_3' },
+            ],
+          },
+          { label: 'node2', value: 'node2' },
+          { label: 'node3', value: 'node3' },
+        ])
+      })
+
+      it('ツリービューにソート関数を設定', async () => {
+        // ツリービューにソート関数(labelの降順)を設定
+        treeView.setSortFunc((a: CompTreeNode, b: CompTreeNode) => {
+          return a.label > b.label ? -1 : a.label < b.label ? 1 : 0
+        })
+
+        // ツリービューの子ノードはlabelの降順
+        expect(treeView.children.map((node: CompTreeNode) => node.value)).toEqual(['node3', 'node2', 'node1'])
+        // ノードの子ノードもlabelの降順
+        const node1 = treeView.getNode('node1')!
+        expect(node1.children.map((node: CompTreeNode) => node.value)).toEqual(['node1_3', 'node1_2', 'node1_1'])
+
+        verifyTreeView(treeView)
+      })
+
+      it('ノードにソート関数を設定', async () => {
+        // ノードにソート関数(labelの降順)を設定
+        const node1 = treeView.getNode('node1')!
+        node1.setSortFunc((a: CompTreeNode, b: CompTreeNode) => {
+          return a.label > b.label ? -1 : a.label < b.label ? 1 : 0
+        })
+
+        // ツリービューの子ノードはlabelの降順
+        expect(node1.children.map((node: CompTreeNode) => node.value)).toEqual(['node1_3', 'node1_2', 'node1_1'])
+
+        verifyTreeView(treeView)
+      })
+
+      it('ツリービューとノードに別のソート関数を設定', async () => {
+        // ツリービューにソート関数(labelの昇順)を設定
+        treeView.setSortFunc((a: CompTreeNode, b: CompTreeNode) => {
+          return a.label < b.label ? -1 : a.label > b.label ? 1 : 0
+        })
+        // ノードにソート関数(labelの降順)を設定
+        const node1 = treeView.getNode('node1')!
+        node1.setSortFunc((a: CompTreeNode, b: CompTreeNode) => {
+          return a.label > b.label ? -1 : a.label < b.label ? 1 : 0
+        })
+
+        // ツリービューの子ノードはlabelの昇順
+        expect(treeView.children.map((node: CompTreeNode) => node.value)).toEqual(['node1', 'node2', 'node3'])
+        // ノードの子ノードはlabelの降順
+        expect(node1.children.map((node: CompTreeNode) => node.value)).toEqual(['node1_3', 'node1_2', 'node1_1'])
+
+        verifyTreeView(treeView)
+      })
+    })
+
+    describe('プロパティ変更による並び順検証', () => {
+      describe('ツリービューの子ノード', () => {
+        beforeEach(() => {
+          const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+          treeView = wrapper.vm
+          treeView.buildTree(
+            [
+              { label: 'node1', value: 'node1' },
+              { label: 'node2', value: 'node2' },
+              { label: 'node3', value: 'node3' },
+            ],
+            {
+              // ツリービューにソート関数(labelの降順)を設定
+              sortFunc: (a: CompTreeNode, b: CompTreeNode) => {
+                return a.label < b.label ? -1 : a.label > b.label ? 1 : 0
+              },
+            }
+          )
+        })
+
+        it('先頭に移動', async () => {
+          const node3 = treeView.getNode('node3')!
+
+          // ツリービューの子ノードのプロパティを変更
+          const newLabel = 'node0'
+          node3.label = newLabel
+
+          // ノードの並び順再設定が非同期で実行されるので少し待機
+          await sleep(100)
+
+          expect(node3.label).toBe(newLabel)
+          expect(treeView.getNode(node3.value)!.label).toBe(newLabel)
+          // ツリービューの子ノードはlabelの昇順
+          expect(treeView.children.map((node: CompTreeNode) => node.value)).toEqual(['node3', 'node1', 'node2'])
+
+          verifyTreeView(treeView)
+        })
+
+        it('真ん中に移動', async () => {
+          const node3 = treeView.getNode('node3')!
+
+          // ツリービューの子ノードのプロパティを変更
+          const newLabel = 'node1.1'
+          node3.label = newLabel
+
+          // ノードの並び順再設定が非同期で実行されるので少し待機
+          await sleep(100)
+
+          expect(node3.label).toBe(newLabel)
+          expect(treeView.getNode(node3.value)!.label).toBe(newLabel)
+          // ツリービューの子ノードはlabelの昇順
+          expect(treeView.children.map((node: CompTreeNode) => node.value)).toEqual(['node1', 'node3', 'node2'])
+
+          verifyTreeView(treeView)
+        })
+
+        it('最後尾に移動', async () => {
+          const node1 = treeView.getNode('node1')!
+
+          // ツリービューの子ノードのプロパティを変更
+          const newLabel = 'node3.1'
+          node1.label = newLabel
+
+          // ノードの並び順再設定が非同期で実行されるので少し待機
+          await sleep(100)
+
+          expect(node1.label).toBe(newLabel)
+          expect(treeView.getNode(node1.value)!.label).toBe(newLabel)
+          // ツリービューの子ノードはlabelの昇順
+          expect(treeView.children.map((node: CompTreeNode) => node.value)).toEqual(['node2', 'node3', 'node1'])
+
+          verifyTreeView(treeView)
+        })
+      })
+
+      describe('ノードの子ノード', () => {
+        beforeEach(() => {
+          const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+          treeView = wrapper.vm
+          treeView.buildTree(
+            [
+              {
+                label: 'node1',
+                value: 'node1',
+                children: [
+                  { label: 'node1_1', value: 'node1_1' },
+                  { label: 'node1_2', value: 'node1_2' },
+                  { label: 'node1_3', value: 'node1_3' },
+                ],
+              },
+            ],
+            {
+              // ツリービューにソート関数(labelの降順)を設定
+              sortFunc: (a: CompTreeNode, b: CompTreeNode) => {
+                return a.label < b.label ? -1 : a.label > b.label ? 1 : 0
+              },
+            }
+          )
+        })
+
+        it('先頭に移動', async () => {
+          const node1 = treeView.getNode('node1')!
+          const node1_3 = treeView.getNode('node1_3')!
+
+          // ノードの子ノードのプロパティを変更
+          const newLabel = 'node1_0'
+          node1_3.label = newLabel
+
+          // ノードの並び順再設定が非同期で実行されるので少し待機
+          await sleep(100)
+
+          expect(node1_3.label).toBe(newLabel)
+          expect(treeView.getNode(node1_3.value)!.label).toBe(newLabel)
+          // ノードの子ノードはlabelの昇順
+          expect(node1.children.map((node: CompTreeNode) => node.value)).toEqual(['node1_3', 'node1_1', 'node1_2'])
+
+          verifyTreeView(treeView)
+        })
+
+        it('真ん中に移動', async () => {
+          const node1 = treeView.getNode('node1')!
+          const node1_3 = treeView.getNode('node1_3')!
+
+          // ノードの子ノードのプロパティを変更
+          const newLabel = 'node1_1.1'
+          node1_3.label = newLabel
+
+          // ノードの並び順再設定が非同期で実行されるので少し待機
+          await sleep(100)
+
+          expect(node1_3.label).toBe(newLabel)
+          expect(treeView.getNode(node1_3.value)!.label).toBe(newLabel)
+          // ノードの子ノードはlabelの昇順
+          expect(node1.children.map((node: CompTreeNode) => node.value)).toEqual(['node1_1', 'node1_3', 'node1_2'])
+
+          verifyTreeView(treeView)
+        })
+
+        it('最後尾に移動', async () => {
+          const node1 = treeView.getNode('node1')!
+          const node1_1 = treeView.getNode('node1_1')!
+
+          // ノードの子ノードのプロパティを変更
+          const newLabel = 'node1_3.1'
+          node1_1.label = newLabel
+
+          // ノードの並び順再設定が非同期で実行されるので少し待機
+          await sleep(100)
+
+          expect(node1_1.label).toBe(newLabel)
+          expect(treeView.getNode(node1_1.value)!.label).toBe(newLabel)
+          // ノードの子ノードはlabelの昇順
+          expect(node1.children.map((node: CompTreeNode) => node.value)).toEqual(['node1_2', 'node1_3', 'node1_1'])
+
+          verifyTreeView(treeView)
+        })
+      })
+    })
+  })
+
   describe('プロパティ値の変更', () => {
-    it('プロパティ変更 - 共通', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
-      const treeView = wrapper.vm
-      const nodeDataList = editNodeDataList(baseNodeDataList)
-      treeView.buildTree(nodeDataList)
-
-      const node1_1_1 = treeView.getNode('node1_1_1')!
-
-      let func!: any
-
-      // label
-      func = td.replace(node1_1_1, 'resetOwnPositionInParentDebounce')
-      node1_1_1.label = `${node1_1_1.label}_xxx`
-      expect(td.explain(func).calls.length).toBeGreaterThan(0)
-
-      // value
-      func = td.replace(node1_1_1, 'resetOwnPositionInParentDebounce')
-      node1_1_1.value = `${node1_1_1.label}_xxx`
-      expect(td.explain(func).calls.length).toBeGreaterThan(0)
-
-      // icon
-      func = td.replace(node1_1_1, 'resetOwnPositionInParentDebounce')
-      node1_1_1.icon = 'description'
-      expect(td.explain(func).calls.length).toBeGreaterThan(0)
-
-      // iconColor
-      func = td.replace(node1_1_1, 'resetOwnPositionInParentDebounce')
-      node1_1_1.iconColor = 'indigo-5'
-      expect(td.explain(func).calls.length).toBeGreaterThan(0)
-
-      // unselectable
-      func = td.replace(node1_1_1, 'resetOwnPositionInParentDebounce')
-      node1_1_1.unselectable = !node1_1_1.unselectable
-      expect(td.explain(func).calls.length).toBeGreaterThan(0)
-
-      // selected
-      func = td.replace(node1_1_1, 'resetOwnPositionInParentDebounce')
-      node1_1_1.selected = !node1_1_1.selected
-      expect(td.explain(func).calls.length).toBeGreaterThan(0)
-
-      // lazy
-      func = td.replace(node1_1_1, 'resetOwnPositionInParentDebounce')
-      node1_1_1.lazy = !node1_1_1.lazy
-      expect(td.explain(func).calls.length).toBeGreaterThan(0)
-
-      // lazyLoadStatus
-      func = td.replace(node1_1_1, 'resetOwnPositionInParentDebounce')
-      node1_1_1.lazyLoadStatus = 'loaded'
-      expect(td.explain(func).calls.length).toBeGreaterThan(0)
-    })
-
-    it('setNodeData() - 共通', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
-      const treeView = wrapper.vm
-      const nodeDataList = editNodeDataList(baseNodeDataList)
-      treeView.buildTree(nodeDataList)
-
-      const node1_1_1 = treeView.getNode('node1_1_1')!
-      const func = td.replace(node1_1_1, 'resetOwnPositionInParent')
-
-      node1_1_1.setNodeData({ label: `${node1_1_1.label}_xxx` })
-
-      expect(td.explain(func).calls.length).toBe(1)
-    })
-
     it('labelを変更 - プロパティ変更', () => {
       const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
       const treeView = wrapper.vm
@@ -2735,65 +2900,6 @@ describe('CompTreeNode', () => {
 
       expect(node1_1.lazyLoadStatus).toBe(newLazyLoadStatus)
       expect(getNodeData(nodeDataList, node1_1.value)!.lazyLoadStatus).toBe(newLazyLoadStatus)
-      verifyTreeView(treeView)
-    })
-  })
-
-  describe('resetOwnPositionInParent', () => {
-    it('現在位置より前に配置されるような変更が行われた場合', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
-      const treeView = wrapper.vm
-      treeView.buildTree(editNodeDataList(baseNodeDataList, [{ value: 'node1_1', sortFunc }]))
-
-      const node1_1 = treeView.getNode('node1_1')!
-
-      const node1_1_0 = treeView.getNode('node1_1_2')!
-      node1_1_0.setNodeData({
-        value: 'node1_1_0',
-        label: 'Node1_1_0',
-      })
-
-      expect(treeView.getNode('node1_1_0')).toBe(node1_1_0)
-      expect(node1_1.children[0]).toBe(node1_1_0)
-      expect(node1_1.childContainer.children[0]).toBe(node1_1_0.$el)
-      verifyTreeView(treeView)
-    })
-
-    it('現在位置より後に配置されるような変更が行われた場合', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
-      const treeView = wrapper.vm
-      treeView.buildTree(editNodeDataList(baseNodeDataList, [{ value: 'node1_1', sortFunc }]))
-
-      const node1_1 = treeView.getNode('node1_1')!
-
-      const node1_1_9 = treeView.getNode('node1_1_2')!
-      node1_1_9.setNodeData({
-        value: 'node1_1_9',
-        label: 'Node1_1_9',
-      })
-
-      expect(treeView.getNode('node1_1_9')).toBe(node1_1_9)
-      expect(node1_1.children[2]).toBe(node1_1_9)
-      expect(node1_1.childContainer.children[2]).toBe(node1_1_9.$el)
-      verifyTreeView(treeView)
-    })
-
-    it('現在位置と同じ場所に配置されるような変更が行われた場合', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
-      const treeView = wrapper.vm
-      treeView.buildTree(editNodeDataList(baseNodeDataList, [{ value: 'node1_1', sortFunc }]))
-
-      const node1_1 = treeView.getNode('node1_1')!
-
-      const node1_1_2p5 = treeView.getNode('node1_1_2')!
-      node1_1_2p5.setNodeData({
-        value: 'node1_1_2.5',
-        label: 'Node1_1_2.5',
-      })
-
-      expect(treeView.getNode('node1_1_2.5')).toBe(node1_1_2p5)
-      expect(node1_1.children[1]).toBe(node1_1_2p5)
-      expect(node1_1.childContainer.children[1]).toBe(node1_1_2p5.$el)
       verifyTreeView(treeView)
     })
   })

@@ -61,7 +61,7 @@ interface CompTreeNodeData {
   /**
    * 子ノードの並びを決めるソート関数を指定します。
    */
-  sortFunc?: ChildrenSortFunc<any>
+  sortFunc?: ChildrenSortFunc<any> | null
 }
 
 type CompTreeNodeEditData<T> = Partial<Omit<T, 'nodeClass' | 'children'>>
@@ -85,12 +85,20 @@ interface CompTreeViewLazyLoadEvent<N extends CompTreeNode = CompTreeNode> {
 //  tree-view Internal
 //--------------------------------------------------
 
-interface CompTreeNodeParent<FAMILY_NODE extends CompTreeNode = CompTreeNode> {
+interface CompTreeNodeParent<FAMILY_NODE extends CompTreeNodeIntl = CompTreeNodeIntl> {
   readonly el: HTMLElement
   readonly children: FAMILY_NODE[]
-  readonly sortFunc: ChildrenSortFunc | null
   readonly childContainer: HTMLElement
-  getInsertIndex(newNode: FAMILY_NODE, options?: { insertIndex?: number | null }): number
+  getSortFunc<N extends CompTreeNode = FAMILY_NODE>(): ChildrenSortFunc<N> | null
+  sortChildren(): void
+  /**
+   * 指定ノードの親コンテナ内における配置位置を再設定します。
+   * この関数は以下の条件に一致する場合に呼び出す必要があります。
+   * + 親ノードがソート関数によって子ノードの並びを決定している場合
+   * + 指定ノードのプロパティ変更がソート関数に影響を及ぼす場合
+   * @param node
+   */
+  resetNodePositionInParent(node: FAMILY_NODE): void
 }
 
 interface NodePropertyChangeDetail {

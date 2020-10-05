@@ -90,9 +90,9 @@
 <script lang="ts">
 import * as util from '@/components/tree-view/base'
 import { ChildrenSortFunc, CompTreeNodeData, CompTreeNodeEditData, CompTreeNodeParent, CompTreeViewLazyLoadStatus } from '@/components/tree-view/base'
-import { CompTreeView, CompTreeViewIntl } from '@/components/tree-view/comp-tree-view.vue'
 import { SetupContext, computed, defineComponent, getCurrentInstance, nextTick, reactive, ref, set } from '@vue/composition-api'
 import { CompLoadingSpinner } from '@/components/loading-spinner'
+import { CompTreeViewIntl } from '@/components/tree-view/comp-tree-view.vue'
 import Vue from 'vue'
 import anime from 'animejs'
 import debounce from 'lodash/debounce'
@@ -109,7 +109,7 @@ interface CompTreeNode<FAMILY_NODE extends CompTreeNode = _CompTreeNode> extends
   /**
    * 自身が最年長のノードかを示すフラグです。
    */
-  isEldest: boolean
+  readonly isEldest: boolean
 
   /**
    * アイコン名です。
@@ -170,14 +170,19 @@ interface CompTreeNode<FAMILY_NODE extends CompTreeNode = _CompTreeNode> extends
   lazyLoadStatus: CompTreeViewLazyLoadStatus
 
   /**
-   * 子ノードの並びを決めるソート関数です。
-   */
-  readonly sortFunc: ChildrenSortFunc | null
-
-  /**
    * ノードの最小幅です。
    */
   readonly minWidth: number
+
+  /**
+   * 子ノードの並びを決めるソート関数を取得します。
+   */
+  getSortFunc<N extends CompTreeNode = FAMILY_NODE>(): ChildrenSortFunc<N> | null
+
+  /**
+   * 子ノードの並びを決めるソート関数を設定します。
+   */
+  setSortFunc<N extends CompTreeNode = FAMILY_NODE>(value: ChildrenSortFunc<N> | null): void
 
   /**
    * ノードを編集するためのデータを設定します。
@@ -244,7 +249,7 @@ interface CompTreeNode<FAMILY_NODE extends CompTreeNode = _CompTreeNode> extends
   /**
    * 本ノードが所属するツリービューを取得します。
    */
-  getTreeView(): CompTreeView | null
+  getTreeView(): CompTreeViewIntl | null
 
   /**
    * ルートノードを取得します。
@@ -268,6 +273,8 @@ interface CompTreeNodeIntl<FAMILY_NODE extends CompTreeNodeIntl = _CompTreeNodeI
 
   init(nodeData: CompTreeNodeData): void
 
+  setIsEldest(value: boolean): void
+
   setParent(value: FAMILY_NODE | null): void
 
   setTreeView(value: CompTreeViewIntl | null): void
@@ -277,6 +284,8 @@ interface CompTreeNodeIntl<FAMILY_NODE extends CompTreeNodeIntl = _CompTreeNodeI
   refreshChildContainerHeightWithAnimation(): Promise<void>
 
   getChildrenContainerHeight(base: FAMILY_NODE): number
+
+  getInsertIndex(newNode: FAMILY_NODE, options?: { insertIndex?: number | null }): number
 
   removeChildIntl(childNode: FAMILY_NODE, isDispatchEvent: boolean): boolean
 
@@ -365,16 +374,14 @@ namespace CompTreeNode {
     //
     //----------------------------------------------------------------------
 
-    const isEldest = computed({
-      get: () => state.isEldest,
-      set: value => (state.isEldest = value),
-    })
+    const isEldest = computed(() => state.isEldest)
+    const setIsEldest: CompTreeNodeIntl['setIsEldest'] = value => (state.isEldest = value)
 
     const icon = computed({
       get: () => state.nodeData.icon!,
       set: value => {
         state.nodeData.icon = value
-        resetOwnPositionInParentDebounce()
+        resetNodePositionInParentDebounce(self)
       },
     })
 
@@ -382,7 +389,7 @@ namespace CompTreeNode {
       get: () => state.nodeData.iconColor!,
       set: value => {
         state.nodeData.iconColor = value
-        resetOwnPositionInParentDebounce()
+        resetNodePositionInParentDebounce(self)
       },
     })
 
@@ -394,7 +401,7 @@ namespace CompTreeNode {
         const oldValue = state.nodeData.label
         state.nodeData.label = value
         util.dispatchNodePropertyChange(self, { property: 'label', newValue: value, oldValue })
-        resetOwnPositionInParentDebounce()
+        resetNodePositionInParentDebounce(self)
 
         nextTick(() => {
           setMinWidth()
@@ -408,7 +415,7 @@ namespace CompTreeNode {
         const oldValue = state.nodeData.value
         state.nodeData.value = value
         util.dispatchNodePropertyChange(self, { property: 'value', newValue: value, oldValue })
-        resetOwnPositionInParentDebounce()
+        resetNodePositionInParentDebounce(self)
       },
     })
 
@@ -419,7 +426,7 @@ namespace CompTreeNode {
         if (value) {
           selected.value = false
         }
-        resetOwnPositionInParentDebounce()
+        resetNodePositionInParentDebounce(self)
       },
     })
 
@@ -427,7 +434,7 @@ namespace CompTreeNode {
       get: () => state.nodeData.selected!,
       set: value => {
         setSelectedIntl(value, { silent: false })
-        resetOwnPositionInParentDebounce()
+        resetNodePositionInParentDebounce(self)
       },
     })
 
@@ -439,7 +446,7 @@ namespace CompTreeNode {
       get: () => state.nodeData.lazy,
       set: value => {
         state.nodeData.lazy = value
-        resetOwnPositionInParentDebounce()
+        resetNodePositionInParentDebounce(self)
       },
     })
 
@@ -447,11 +454,9 @@ namespace CompTreeNode {
       get: () => state.nodeData.lazyLoadStatus!,
       set: value => {
         state.nodeData.lazyLoadStatus = value
-        resetOwnPositionInParentDebounce()
+        resetNodePositionInParentDebounce(self)
       },
     })
-
-    const sortFunc = computed(() => state.nodeData.sortFunc || null)
 
     const minWidth = computed(() => {
       setMinWidth()
@@ -463,6 +468,21 @@ namespace CompTreeNode {
     //  Methods
     //
     //----------------------------------------------------------------------
+
+    const getSortFunc: CompTreeNodeIntl['getSortFunc'] = () => {
+      if (state.nodeData.sortFunc) {
+        return state.nodeData.sortFunc
+      }
+      const treeView = getTreeView()
+      return treeView?.getSortFunc() ?? null
+    }
+
+    const setSortFunc: CompTreeNodeIntl['setSortFunc'] = value => {
+      state.nodeData.sortFunc = value ?? null
+      if (children.value.length) {
+        sortChildren()
+      }
+    }
 
     /**
      * ノードの初期化を行います。
@@ -544,8 +564,8 @@ namespace CompTreeNode {
       // サブクラスで必要な処理を実行
       setNodeData_sub.value?.(editData)
 
-      // 自身の配置位置を再設定
-      resetOwnPositionInParent()
+      // 親コンテナ内における自身の配置位置を再設定
+      resetNodePositionInParent(self)
     }
 
     /**
@@ -563,18 +583,18 @@ namespace CompTreeNode {
     }
 
     const addChild: CompTreeNodeIntl['addChild'] = (child: CompTreeNodeData | CompTreeNode, options?: { insertIndex?: number | null }) => {
-      let childNode: CompTreeNode
+      let childNode: CompTreeNodeIntl
       const childType = child instanceof Vue ? 'Node' : 'Data'
 
       switch (childType) {
         // 引数のノードがノードコンポーネントで指定された場合
         case 'Node': {
-          childNode = addChildByNode(child as CompTreeNodeIntl, options) as CompTreeNode
+          childNode = addChildByNode(child as CompTreeNodeIntl, options)
           break
         }
         // 引数のノードがノードデータで指定された場合
         case 'Data': {
-          childNode = addChildByData(child as CompTreeNodeData, options) as CompTreeNode
+          childNode = addChildByData(child as CompTreeNodeData, options)
         }
       }
 
@@ -608,7 +628,7 @@ namespace CompTreeNode {
 
     const setSelected: CompTreeNodeIntl['setSelected'] = (selected, silent) => {
       setSelectedIntl(selected, { silent })
-      resetOwnPositionInParentDebounce()
+      resetNodePositionInParentDebounce(self)
     }
 
     const toggle: CompTreeNodeIntl['toggle'] = (animated = true) => {
@@ -669,32 +689,41 @@ namespace CompTreeNode {
       state.minWidth = nodeContainerWidth >= childContainerWidth ? nodeContainerWidth : childContainerWidth
     }
 
-    /**
-     * 親ノードのコンテナ内における自身の配置位置を再設定します。
-     * この関数は以下の条件に一致する場合に呼び出す必要があります。
-     * + 親ノードがソート関数によって子ノードの並びを決定している場合
-     * + 自ノードのプロパティ変更が自身の配置位置に影響を及ぼす場合
-     */
-    function resetOwnPositionInParent(): void {
-      // 親にソート関数が設定されていない場合、何もせず終了
-      const myParent = (parent.value || getTreeView()) as CompTreeNodeParent | null
-      if (!myParent || !myParent.sortFunc) return
+    const sortChildren: CompTreeNodeIntl['sortChildren'] = () => {
+      const sortFunc = getSortFunc()
+      if (!sortFunc) return
 
-      const insertIndex = myParent.getInsertIndex(self)
-      const currentIndex = myParent.children.indexOf(self)
-      if (insertIndex === currentIndex) return
-
-      if (insertIndex < currentIndex) {
-        const afterNode = myParent.childContainer.children[insertIndex]
-        myParent.childContainer.insertBefore(el.value!, afterNode)
-      } else if (insertIndex > currentIndex) {
-        const refNode = myParent.childContainer.children[insertIndex]
-        myParent.childContainer.insertBefore(el.value!, refNode.nextSibling)
+      children.value.sort(sortFunc)
+      for (const child of children.value) {
+        childContainer.value!.appendChild(child.el)
       }
-      myParent.children.sort(myParent.sortFunc)
     }
 
-    const resetOwnPositionInParentDebounce: () => void = debounce(resetOwnPositionInParent, 0)
+    const resetNodePositionInParent: CompTreeViewIntl['resetNodePositionInParent'] = node => {
+      if (node.parent) {
+        // 親ノードまたはツリービューにソート関数が指定されていない場合、何もしない
+        const sortFunc = node.parent.getSortFunc()
+        if (!sortFunc) return
+
+        const insertIndex = node.parent.getInsertIndex(node)
+        const currentIndex = node.parent.children.indexOf(node)
+        if (insertIndex === currentIndex) return
+
+        if (insertIndex < currentIndex) {
+          const afterNode = node.parent.childContainer.children[insertIndex]
+          node.parent.childContainer.insertBefore(node.el, afterNode)
+        } else if (insertIndex > currentIndex) {
+          const refNode = node.parent.childContainer.children[insertIndex]
+          node.parent.childContainer.insertBefore(node.el, refNode.nextSibling)
+        }
+        node.parent.children.sort(sortFunc)
+      } else {
+        const treeView = getTreeView()
+        treeView?.resetNodePositionInParent(node)
+      }
+    }
+
+    const resetNodePositionInParentDebounce = debounce(resetNodePositionInParent, 0)
 
     function dispatchExtraEvent<T>(extraEventName: string, detail?: T): void {
       el.value!.dispatchEvent(
@@ -707,7 +736,7 @@ namespace CompTreeNode {
       )
     }
 
-    function addChildByData(childNodeData: CompTreeNodeData, options?: { insertIndex?: number | null }): CompTreeNode {
+    function addChildByData(childNodeData: CompTreeNodeData, options?: { insertIndex?: number | null }): CompTreeNodeIntl {
       const treeView = getTreeView()
       if (!treeView) {
         throw new Error(`'treeView' not found.`)
@@ -758,7 +787,7 @@ namespace CompTreeNode {
       return childNode
     }
 
-    function addChildByNode(childNode: CompTreeNodeIntl, options?: { insertIndex?: number | null }): CompTreeNode {
+    function addChildByNode(childNode: CompTreeNodeIntl, options?: { insertIndex?: number | null }): CompTreeNodeIntl {
       // 追加ノードの子に自ノードが含まれないことを検証
       const descendantDict = util.getDescendantDict(childNode)
       if (descendantDict[value.value]) {
@@ -791,7 +820,7 @@ namespace CompTreeNode {
       } else {
         // 親ノードがない場合ツリービューが親となるので、ツリービューから追加ノードを削除
         const treeView = getTreeView()
-        treeView && treeView.removeNode(childNode.value)
+        treeView?.removeNode(childNode.value)
       }
 
       // ノード挿入位置を決定
@@ -831,15 +860,16 @@ namespace CompTreeNode {
     }
 
     const getInsertIndex: CompTreeNodeIntl['getInsertIndex'] = (newNode: CompTreeNodeIntl, options) => {
-      // ソート関数が指定されている場合
-      if (typeof sortFunc.value === 'function') {
+      const sortFunc = getSortFunc()
+      // 親ノードまたはツリービューにソート関数が指定されている場合
+      if (sortFunc) {
         const newChildren: CompTreeNodeIntl[] = []
         if (children.value.includes(newNode)) {
           newChildren.push(...children.value)
         } else {
           newChildren.push(...children.value, newNode)
         }
-        newChildren.sort(sortFunc.value)
+        newChildren.sort(sortFunc)
         return newChildren.indexOf(newNode)
       }
       // 挿入位置が指定された場合
@@ -1163,8 +1193,9 @@ namespace CompTreeNode {
       children,
       lazy,
       lazyLoadStatus,
-      sortFunc,
       minWidth,
+      getSortFunc,
+      setSortFunc,
       setNodeData,
       addChild,
       removeChild,
@@ -1187,10 +1218,12 @@ namespace CompTreeNode {
       setNodeData_sub,
       setParent,
       setTreeView,
+      setIsEldest,
+      removeChildIntl,
       refreshChildContainerHeight,
       refreshChildContainerHeightWithAnimation,
       getChildrenContainerHeight,
-      removeChildIntl,
+      getInsertIndex,
       ascendSetBlockForDisplay,
       ascendSetAnyForDisplay,
 
@@ -1199,7 +1232,8 @@ namespace CompTreeNode {
       //
       el,
       childContainer,
-      getInsertIndex,
+      sortChildren,
+      resetNodePositionInParent,
 
       //--------------------------------------------------
       //  extended
@@ -1209,6 +1243,7 @@ namespace CompTreeNode {
       extraEventNames,
       hasChildren,
       dispatchExtraEvent,
+      resetNodePositionInParentDebounce,
       toggleIconOnClick,
       itemContainerOnClick,
 

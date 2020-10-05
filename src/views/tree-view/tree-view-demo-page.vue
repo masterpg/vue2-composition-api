@@ -172,15 +172,15 @@ namespace TreeViewDemoPage {
       }
 
       function addNode() {
-        const parentNode = treeView.value!.getNode(state.addedInput.parentValue)!
-        parentNode.open(false)
+        const parentNode = treeView.value!.getNode(state.addedInput.parentValue)
+        parentNode?.open(false)
 
         treeView.value!.addNode(
           {
             value: state.addedInput.nodeValue,
             label: state.addedInput.nodeLabel ? state.addedInput.nodeLabel : state.addedInput.nodeValue,
           },
-          { parent: state.addedInput.parentValue }
+          { parent: state.addedInput.parentValue || undefined }
         )
       }
 
