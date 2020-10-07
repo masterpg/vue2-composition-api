@@ -1,14 +1,14 @@
 import * as util from '@/components/tree-view/base'
 import {
-  CompTreeCheckboxNode,
-  CompTreeNode,
-  CompTreeNodeData,
-  CompTreeNodeIntl,
-  CompTreeView,
-  CompTreeViewEvent,
-  CompTreeViewIntl,
-  CompTreeViewLazyLoadEvent,
-  CompTreeViewLazyLoadStatus,
+  TreeCheckboxNode,
+  TreeNode,
+  TreeNodeData,
+  TreeNodeIntl,
+  TreeView,
+  TreeViewEvent,
+  TreeViewIntl,
+  TreeViewLazyLoadEvent,
+  TreeViewLazyLoadStatus,
 } from '@/components/tree-view'
 import { Wrapper, mount } from '@vue/test-utils'
 import { cloneDeep, merge } from 'lodash'
@@ -62,7 +62,7 @@ const baseNodeDataList = [
 //
 //========================================================================
 
-function verifyTreeView(treeView: CompTreeViewIntl) {
+function verifyTreeView(treeView: TreeViewIntl) {
   for (let i = 0; i < treeView.children.length; i++) {
     const node = treeView.children[i]
     // ノードからツリービューが取得できることを検証
@@ -91,7 +91,7 @@ function verifyTreeView(treeView: CompTreeViewIntl) {
   }
 }
 
-function verifyParentChildRelation(treeView: CompTreeViewIntl, node: CompTreeNodeIntl) {
+function verifyParentChildRelation(treeView: TreeViewIntl, node: TreeNodeIntl) {
   for (let i = 0; i < node.children.length; i++) {
     const child = node.children[i]
     // ツリービューから子ノードを取得できることを検証
@@ -106,14 +106,14 @@ function verifyParentChildRelation(treeView: CompTreeViewIntl, node: CompTreeNod
   }
 }
 
-function verifyIsEldest(treeView: CompTreeViewIntl) {
-  treeView.children.forEach((node: CompTreeNodeIntl, index: number) => {
+function verifyIsEldest(treeView: TreeViewIntl) {
+  treeView.children.forEach((node: TreeNodeIntl, index: number) => {
     const isEldest = index === 0
     expect(node.isEldest).toBe(isEldest)
   })
 }
 
-const sortFunc = (a: CompTreeNode | any, b: CompTreeNode | any) => {
+const sortFunc = (a: TreeNode | any, b: TreeNode | any) => {
   if (a.label < b.label) {
     return -1
   } else if (a.label > b.label) {
@@ -123,7 +123,7 @@ const sortFunc = (a: CompTreeNode | any, b: CompTreeNode | any) => {
   }
 }
 
-function getNodeData(nodeDataList: CompTreeNodeData[], value: string): CompTreeNodeData | undefined {
+function getNodeData(nodeDataList: TreeNodeData[], value: string): TreeNodeData | undefined {
   for (const nodeData of nodeDataList) {
     if (nodeData.value === value) {
       return nodeData
@@ -136,10 +136,7 @@ function getNodeData(nodeDataList: CompTreeNodeData[], value: string): CompTreeN
   return undefined
 }
 
-function editNodeDataList(
-  srcNodeDataList: CompTreeNodeData[],
-  editDataList: (Partial<CompTreeNodeData> & { value: string })[] = []
-): CompTreeNodeData[] {
+function editNodeDataList(srcNodeDataList: TreeNodeData[], editDataList: (Partial<TreeNodeData> & { value: string })[] = []): TreeNodeData[] {
   const newNodeDataList = cloneDeep(srcNodeDataList)
   for (const editData of editDataList) {
     const nodeData = getNodeData(newNodeDataList, editData.value)
@@ -165,10 +162,10 @@ async function clearEmitted(wrapper: Wrapper<any>, delay = 0): Promise<void> {
 //
 //========================================================================
 
-describe('CompTreeView', () => {
+describe('TreeView', () => {
   describe('buildTree()', () => {
     it('ベーシックケース', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -212,7 +209,7 @@ describe('CompTreeView', () => {
     })
 
     it('先頭に挿入', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -239,7 +236,7 @@ describe('CompTreeView', () => {
     })
 
     it('中間に挿入', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -266,7 +263,7 @@ describe('CompTreeView', () => {
     })
 
     it('最後尾に挿入', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -295,7 +292,7 @@ describe('CompTreeView', () => {
 
   describe('addNode()', () => {
     it('挿入位置の指定なし', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -310,7 +307,7 @@ describe('CompTreeView', () => {
     })
 
     it('先頭に挿入', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -328,7 +325,7 @@ describe('CompTreeView', () => {
     })
 
     it('中間に挿入', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -346,7 +343,7 @@ describe('CompTreeView', () => {
     })
 
     it('中間に挿入(sortFuncを使用)', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       // ツリービュー直下の子ノードはsortFuncによって並び順が決められる
       treeView.buildTree(cloneDeep(baseNodeDataList), { sortFunc })
@@ -362,7 +359,7 @@ describe('CompTreeView', () => {
     })
 
     it('insertIndexとsortFuncの両方を指定', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList), { sortFunc })
 
@@ -381,7 +378,7 @@ describe('CompTreeView', () => {
     })
 
     it('最後尾に挿入', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -399,7 +396,7 @@ describe('CompTreeView', () => {
     })
 
     it('既に存在するノードを指定して追加', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -419,7 +416,7 @@ describe('CompTreeView', () => {
     })
 
     it('親ノードを指定', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -438,7 +435,7 @@ describe('CompTreeView', () => {
     })
 
     it('親ノードと挿入位置を指定', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -457,11 +454,11 @@ describe('CompTreeView', () => {
     })
 
     describe('ノードを入れ替え', () => {
-      let wrapper!: Wrapper<CompTreeViewIntl>
-      let treeView!: CompTreeViewIntl
+      let wrapper!: Wrapper<TreeViewIntl>
+      let treeView!: TreeViewIntl
 
       beforeEach(() => {
-        wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+        wrapper = mount<TreeViewIntl>(TreeView.clazz)
         treeView = wrapper.vm
         treeView.buildTree([
           {
@@ -575,7 +572,7 @@ describe('CompTreeView', () => {
     })
 
     it('下位レベルのノードをトップレベルへ移動', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -593,7 +590,7 @@ describe('CompTreeView', () => {
     })
 
     it('存在しない親ノードを指定', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -618,7 +615,7 @@ describe('CompTreeView', () => {
 
   describe('removeNode()', () => {
     it('レベル1のノード(子孫ノード有り)を削除', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -641,7 +638,7 @@ describe('CompTreeView', () => {
     })
 
     it('レベル2のノード(子ノード有り)を削除', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -666,7 +663,7 @@ describe('CompTreeView', () => {
     })
 
     it('選択ノードを削除', async () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -679,7 +676,7 @@ describe('CompTreeView', () => {
       // イベント発火を検証
       // ・select-change
       const selectChangeEmitted = wrapper.emitted('select-change')!
-      const selectChangeEvent: CompTreeViewEvent = selectChangeEmitted[0][0]
+      const selectChangeEvent: TreeViewEvent = selectChangeEmitted[0][0]
       expect(selectChangeEmitted.length).toBe(1)
       expect(selectChangeEvent.node).toBe(node1_1_1)
       // ・select
@@ -693,7 +690,7 @@ describe('CompTreeView', () => {
     })
 
     it('選択ノードを子に持つ親ノードを削除', async () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -708,7 +705,7 @@ describe('CompTreeView', () => {
       // イベント発火を検証
       // ・select-change
       const selectChangeEmitted = wrapper.emitted('select-change')!
-      const selectChangeEvent: CompTreeViewEvent = selectChangeEmitted[0][0]
+      const selectChangeEvent: TreeViewEvent = selectChangeEmitted[0][0]
       expect(selectChangeEmitted.length).toBe(1)
       expect(selectChangeEvent.node).toBe(node1_1_1)
       // ・select
@@ -722,7 +719,7 @@ describe('CompTreeView', () => {
     })
 
     it('存在しないノードを指定', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -733,7 +730,7 @@ describe('CompTreeView', () => {
     })
 
     it('削除したノードを追加', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -754,7 +751,7 @@ describe('CompTreeView', () => {
 
   describe('removeAllNodes()', () => {
     it('ベーシックケース', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -784,7 +781,7 @@ describe('CompTreeView', () => {
 
   describe('selectedNode', () => {
     it('選択ノードがある状態で取得', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -796,7 +793,7 @@ describe('CompTreeView', () => {
     })
 
     it('選択ノードがない状態で取得', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList, [{ value: 'node1_1_1', selected: false }])
       treeView.buildTree(nodeDataList)
@@ -808,7 +805,7 @@ describe('CompTreeView', () => {
     })
 
     it('現在選択されているノードと同じノードを設定', async () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -824,7 +821,7 @@ describe('CompTreeView', () => {
       // ・select
       await sleep(100)
       const selectEmitted = wrapper.emitted('select')!
-      const selectEvent: CompTreeViewEvent = selectEmitted[0][0]
+      const selectEvent: TreeViewEvent = selectEmitted[0][0]
       expect(selectEmitted.length).toBe(1)
       expect(selectEvent.node).toBe(node1_1_1)
       // ノードの選択状態を検証
@@ -835,7 +832,7 @@ describe('CompTreeView', () => {
     })
 
     it('現在選択されているノードと別のノードを設定', async () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -850,15 +847,15 @@ describe('CompTreeView', () => {
       // イベント発火を検証
       // ・select-change
       const selectChangeEmitted = wrapper.emitted('select-change')!
-      const selectChangeEvent1: CompTreeViewEvent = selectChangeEmitted[0][0]
-      const selectChangeEvent2: CompTreeViewEvent = selectChangeEmitted[1][0]
+      const selectChangeEvent1: TreeViewEvent = selectChangeEmitted[0][0]
+      const selectChangeEvent2: TreeViewEvent = selectChangeEmitted[1][0]
       expect(selectChangeEmitted.length).toBe(2)
       expect(selectChangeEvent1.node).toBe(node1_1_1)
       expect(selectChangeEvent2.node).toBe(node1_1_3)
       // ・select
       await sleep(100)
       const selectEmitted = wrapper.emitted('select')!
-      const selectEvent: CompTreeViewEvent = selectEmitted[0][0]
+      const selectEvent: TreeViewEvent = selectEmitted[0][0]
       expect(selectEmitted.length).toBe(1)
       expect(selectEvent.node).toBe(node1_1_3)
       // ノードの選択状態を検証
@@ -870,7 +867,7 @@ describe('CompTreeView', () => {
     })
 
     it('現在選択されているノードの選択解除', async () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -886,7 +883,7 @@ describe('CompTreeView', () => {
       expect(wrapper.emitted('select')).toBeUndefined()
       // ・select-change
       const selectChangeEmitted = wrapper.emitted('select-change')!
-      const selectChangeEvent: CompTreeViewEvent = selectChangeEmitted[0][0]
+      const selectChangeEvent: TreeViewEvent = selectChangeEmitted[0][0]
       expect(selectChangeEmitted.length).toBe(1)
       expect(selectChangeEvent.node).toBe(node1_1_1)
       // ノードの選択状態を検証
@@ -899,7 +896,7 @@ describe('CompTreeView', () => {
 
   describe('setSelectedNode', () => {
     it('現在選択されているノードと同じノードを設定', async () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -915,7 +912,7 @@ describe('CompTreeView', () => {
       // ・select
       await sleep(100)
       const selectEmitted = wrapper.emitted('select')!
-      const selectEvent: CompTreeViewEvent = selectEmitted[0][0]
+      const selectEvent: TreeViewEvent = selectEmitted[0][0]
       expect(selectEmitted.length).toBe(1)
       expect(selectEvent.node).toBe(node1_1_1)
       // ノードの選択状態を検証
@@ -926,7 +923,7 @@ describe('CompTreeView', () => {
     })
 
     it('現在選択されているノードと別のノードを設定', async () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -941,15 +938,15 @@ describe('CompTreeView', () => {
       // イベント発火を検証
       // ・select-change
       const selectChangeEmitted = wrapper.emitted('select-change')!
-      const selectChangeEvent1: CompTreeViewEvent = selectChangeEmitted[0][0]
-      const selectChangeEvent2: CompTreeViewEvent = selectChangeEmitted[1][0]
+      const selectChangeEvent1: TreeViewEvent = selectChangeEmitted[0][0]
+      const selectChangeEvent2: TreeViewEvent = selectChangeEmitted[1][0]
       expect(selectChangeEmitted.length).toBe(2)
       expect(selectChangeEvent1.node).toBe(node1_1_1)
       expect(selectChangeEvent2.node).toBe(node1_1_3)
       // ・select
       await sleep(100)
       const selectEmitted = wrapper.emitted('select')!
-      const selectEvent: CompTreeViewEvent = selectEmitted[0][0]
+      const selectEvent: TreeViewEvent = selectEmitted[0][0]
       expect(selectEmitted.length).toBe(1)
       expect(selectEvent.node).toBe(node1_1_3)
       // ノードの選択状態を検証
@@ -961,7 +958,7 @@ describe('CompTreeView', () => {
     })
 
     it('現在選択されているノードの選択解除', async () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -977,7 +974,7 @@ describe('CompTreeView', () => {
       expect(wrapper.emitted('select')).toBeUndefined()
       // ・select-change
       const selectChangeEmitted = wrapper.emitted('select-change')!
-      const selectChangeEvent: CompTreeViewEvent = selectChangeEmitted[0][0]
+      const selectChangeEvent: TreeViewEvent = selectChangeEmitted[0][0]
       expect(selectChangeEmitted.length).toBe(1)
       expect(selectChangeEvent.node).toBe(node1_1_1)
       // ノードの選択状態を検証
@@ -988,7 +985,7 @@ describe('CompTreeView', () => {
     })
 
     it('サイレントモードで選択ノードを設定', async () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -1011,7 +1008,7 @@ describe('CompTreeView', () => {
     })
 
     it('サイレントモードで選択ノードを解除', async () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -1034,7 +1031,7 @@ describe('CompTreeView', () => {
 
   describe('getAllNodes()', () => {
     it('ベーシックケース', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -1050,7 +1047,7 @@ describe('CompTreeView', () => {
     })
 
     it('ノードの位置を変更した場合', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -1077,7 +1074,7 @@ describe('CompTreeView', () => {
   })
 
   it(`ノードのvalueが空文字('')の場合`, () => {
-    const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+    const wrapper = mount<TreeViewIntl>(TreeView.clazz)
     const treeView = wrapper.vm
 
     // valueが空文字('')のノードを作成
@@ -1106,10 +1103,10 @@ describe('CompTreeView', () => {
   })
 })
 
-describe('CompTreeNode', () => {
+describe('TreeNode', () => {
   describe('addChild()', () => {
     it('挿入位置の指定なし', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -1126,7 +1123,7 @@ describe('CompTreeNode', () => {
     })
 
     it('先頭に挿入', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -1146,7 +1143,7 @@ describe('CompTreeNode', () => {
     })
 
     it('中間に挿入', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -1166,7 +1163,7 @@ describe('CompTreeNode', () => {
     })
 
     it('中間に挿入(sortFuncを使用)', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       // 'node1_1'の子ノードはsortFuncによって並び順が決められる
       treeView.buildTree(editNodeDataList(baseNodeDataList, [{ value: 'node1_1', sortFunc }]))
@@ -1184,7 +1181,7 @@ describe('CompTreeNode', () => {
     })
 
     it('insertIndexとsortFuncの両方を指定', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       // 'node1_1'の子ノードはsortFuncによって並び順が決められる
       treeView.buildTree(editNodeDataList(baseNodeDataList, [{ value: 'node1_1', sortFunc }]))
@@ -1206,7 +1203,7 @@ describe('CompTreeNode', () => {
     })
 
     it('最後尾に挿入', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -1226,11 +1223,11 @@ describe('CompTreeNode', () => {
     })
 
     describe('ノードを入れ替え', () => {
-      let wrapper!: Wrapper<CompTreeViewIntl>
-      let treeView!: CompTreeViewIntl
+      let wrapper!: Wrapper<TreeViewIntl>
+      let treeView!: TreeViewIntl
 
       beforeEach(() => {
-        wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+        wrapper = mount<TreeViewIntl>(TreeView.clazz)
         treeView = wrapper.vm
         treeView.buildTree([
           {
@@ -1350,7 +1347,7 @@ describe('CompTreeNode', () => {
     })
 
     it('トップレベルのノードを下位レベルへ移動', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -1370,7 +1367,7 @@ describe('CompTreeNode', () => {
     })
 
     it('既に存在するノードを指定して追加', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -1392,7 +1389,7 @@ describe('CompTreeNode', () => {
     })
 
     it('追加しようとするノードの子に自ノード(新しく親となるノード)が含まれている場合', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -1414,7 +1411,7 @@ describe('CompTreeNode', () => {
 
   describe('removeChild()', () => {
     it('ベーシックケース', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -1438,7 +1435,7 @@ describe('CompTreeNode', () => {
     })
 
     it('選択ノードを削除', async () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -1452,7 +1449,7 @@ describe('CompTreeNode', () => {
       // イベント発火を検証
       // ・select-change
       const selectChangeEmitted = wrapper.emitted('select-change')!
-      const selectChangeEvent: CompTreeViewEvent = selectChangeEmitted[0][0]
+      const selectChangeEvent: TreeViewEvent = selectChangeEmitted[0][0]
       expect(selectChangeEmitted.length).toBe(1)
       expect(selectChangeEvent.node).toBe(node1_1_1)
       // ・select
@@ -1466,7 +1463,7 @@ describe('CompTreeNode', () => {
     })
 
     it('選択ノードを子に持つ親ノードを削除', async () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -1481,7 +1478,7 @@ describe('CompTreeNode', () => {
 
       // イベント発火を検証
       const selectChangeEmitted = wrapper.emitted('select-change')!
-      const selectChangeEvent: CompTreeViewEvent = selectChangeEmitted[0][0]
+      const selectChangeEvent: TreeViewEvent = selectChangeEmitted[0][0]
       expect(selectChangeEmitted.length).toBe(1)
       expect(selectChangeEvent.node).toBe(node1_1_1)
       // ・select
@@ -1495,7 +1492,7 @@ describe('CompTreeNode', () => {
     })
 
     it('存在しないノードを指定', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -1515,7 +1512,7 @@ describe('CompTreeNode', () => {
     })
 
     it('削除したノードを追加', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -1538,7 +1535,7 @@ describe('CompTreeNode', () => {
 
   describe('removeAllChildren()', () => {
     it('ベーシックケース', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -1561,7 +1558,7 @@ describe('CompTreeNode', () => {
 
   describe('getDescendants()', () => {
     it('ベーシックケース', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       treeView.buildTree(cloneDeep(baseNodeDataList))
 
@@ -1579,7 +1576,7 @@ describe('CompTreeNode', () => {
 
   describe('子ノード開閉', () => {
     it('ベーシックケース', async () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList, [{ value: 'node1_1', opened: false }])
       treeView.buildTree(nodeDataList)
@@ -1600,9 +1597,9 @@ describe('CompTreeNode', () => {
       // イベント発火を検証
       // ・open-change
       const openChangeEmitted = wrapper.emitted('open-change')!
-      const openChangeEvent1: CompTreeViewEvent = openChangeEmitted[0][0]
-      const openChangeEvent2: CompTreeViewEvent = openChangeEmitted[1][0]
-      const openChangeEvent3: CompTreeViewEvent = openChangeEmitted[2][0]
+      const openChangeEvent1: TreeViewEvent = openChangeEmitted[0][0]
+      const openChangeEvent2: TreeViewEvent = openChangeEmitted[1][0]
+      const openChangeEvent3: TreeViewEvent = openChangeEmitted[2][0]
       expect(openChangeEmitted.length).toBe(3)
       expect(openChangeEvent1.node).toBe(node1_1)
       expect(openChangeEvent2.node).toBe(node1_1)
@@ -1612,7 +1609,7 @@ describe('CompTreeNode', () => {
     })
 
     it('閉じている中のノード選択時にイベントが発火する事を検証', async () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList, [
         { value: 'node1_1', opened: false },
@@ -1636,12 +1633,12 @@ describe('CompTreeNode', () => {
       // イベント発火を検証
       // ・select-change
       const selectChangeEmitted = wrapper.emitted('select-change')!
-      const selectChangeEvent: CompTreeViewEvent = selectChangeEmitted[0][0]
+      const selectChangeEvent: TreeViewEvent = selectChangeEmitted[0][0]
       expect(selectChangeEmitted.length).toBe(1)
       expect(selectChangeEvent.node).toBe(node1_1_1)
       // ・select
       const selectEmitted = wrapper.emitted('select')!
-      const selectEvent: CompTreeViewEvent = selectEmitted[0][0]
+      const selectEvent: TreeViewEvent = selectEmitted[0][0]
       expect(selectEmitted.length).toBe(1)
       expect(selectEvent.node).toBe(node1_1_1)
       // ノードの選択状態を検証
@@ -1652,7 +1649,7 @@ describe('CompTreeNode', () => {
 
   describe('遅延ロード', () => {
     it('ノード展開時', async done => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList, [{ value: 'node1_1', opened: false, lazy: true }])
       treeView.buildTree(nodeDataList)
@@ -1665,7 +1662,7 @@ describe('CompTreeNode', () => {
       await clearEmitted(wrapper)
 
       // 遅延ロードイベントのリスナ登録
-      treeView.$on('lazy-load', async (e: CompTreeViewLazyLoadEvent) => {
+      treeView.$on('lazy-load', async (e: TreeViewLazyLoadEvent) => {
         // 遅延ロード中の状態を検証
         expect(node1_1.lazyLoadStatus).toBe('loading')
         expect(node1_1.opened).toBe(false)
@@ -1679,7 +1676,7 @@ describe('CompTreeNode', () => {
         // ノード開閉イベント発火を検証
         // ・open-change
         const openChangeEmitted = wrapper.emitted('open-change')!
-        const openChangeEvent: CompTreeViewEvent = openChangeEmitted[0][0]
+        const openChangeEvent: TreeViewEvent = openChangeEmitted[0][0]
         expect(openChangeEmitted.length).toBe(1)
         expect(openChangeEvent.node).toBe(node1_1)
         // 単体テスト完了
@@ -1691,7 +1688,7 @@ describe('CompTreeNode', () => {
     })
 
     it('選択ノード変更時', async done => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList, [{ value: 'node1_1', selected: false, lazy: true }])
       treeView.buildTree(nodeDataList)
@@ -1707,7 +1704,7 @@ describe('CompTreeNode', () => {
       await clearEmitted(wrapper)
 
       // 遅延ロードイベントのリスナ登録
-      treeView.$on('lazy-load', async (e: CompTreeViewLazyLoadEvent) => {
+      treeView.$on('lazy-load', async (e: TreeViewLazyLoadEvent) => {
         // 遅延ロード中の状態を検証
         expect(node1_1.lazyLoadStatus).toBe('loading')
         expect(node1_1.selected).toBe(false)
@@ -1721,14 +1718,14 @@ describe('CompTreeNode', () => {
         // 選択イベント発火を検証
         // ・select-change
         const selectChangeEmitted = wrapper.emitted('select-change')!
-        const selectChangeEvent1: CompTreeViewEvent = selectChangeEmitted[0][0]
-        const selectChangeEvent2: CompTreeViewEvent = selectChangeEmitted[1][0]
+        const selectChangeEvent1: TreeViewEvent = selectChangeEmitted[0][0]
+        const selectChangeEvent2: TreeViewEvent = selectChangeEmitted[1][0]
         expect(selectChangeEmitted.length).toBe(2)
         expect(selectChangeEvent1.node).toBe(node1_1_1)
         expect(selectChangeEvent2.node).toBe(node1_1)
         // ・select
         const selectEmitted = wrapper.emitted('select')!
-        const selectEvent: CompTreeViewEvent = selectEmitted[0][0]
+        const selectEvent: TreeViewEvent = selectEmitted[0][0]
         expect(selectEmitted.length).toBe(1)
         expect(selectEvent.node).toBe(node1_1)
         // ノードの選択状態を検証
@@ -1745,7 +1742,7 @@ describe('CompTreeNode', () => {
     })
 
     it('選択ノード変更時 - サイレントモード', async done => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList, [{ value: 'node1_1', selected: false, lazy: true }])
       treeView.buildTree(nodeDataList)
@@ -1761,7 +1758,7 @@ describe('CompTreeNode', () => {
       await clearEmitted(wrapper)
 
       // 遅延ロードイベントのリスナ登録
-      treeView.$on('lazy-load', async (e: CompTreeViewLazyLoadEvent) => {
+      treeView.$on('lazy-load', async (e: TreeViewLazyLoadEvent) => {
         // 遅延ロード中の状態を検証
         expect(node1_1.lazyLoadStatus).toBe('loading')
         expect(node1_1.selected).toBe(false)
@@ -1792,11 +1789,11 @@ describe('CompTreeNode', () => {
   })
 
   describe('子ノードの並び順', () => {
-    let treeView: CompTreeViewIntl
+    let treeView: TreeViewIntl
 
     describe('ソート関数', () => {
       beforeEach(() => {
-        const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+        const wrapper = mount<TreeViewIntl>(TreeView.clazz)
         treeView = wrapper.vm
         treeView.buildTree([
           {
@@ -1815,15 +1812,15 @@ describe('CompTreeNode', () => {
 
       it('ツリービューにソート関数を設定', async () => {
         // ツリービューにソート関数(labelの降順)を設定
-        treeView.setSortFunc((a: CompTreeNode, b: CompTreeNode) => {
+        treeView.setSortFunc((a: TreeNode, b: TreeNode) => {
           return a.label > b.label ? -1 : a.label < b.label ? 1 : 0
         })
 
         // ツリービューの子ノードはlabelの降順
-        expect(treeView.children.map((node: CompTreeNode) => node.value)).toEqual(['node3', 'node2', 'node1'])
+        expect(treeView.children.map((node: TreeNode) => node.value)).toEqual(['node3', 'node2', 'node1'])
         // ノードの子ノードもlabelの降順
         const node1 = treeView.getNode('node1')!
-        expect(node1.children.map((node: CompTreeNode) => node.value)).toEqual(['node1_3', 'node1_2', 'node1_1'])
+        expect(node1.children.map((node: TreeNode) => node.value)).toEqual(['node1_3', 'node1_2', 'node1_1'])
 
         verifyTreeView(treeView)
       })
@@ -1831,31 +1828,31 @@ describe('CompTreeNode', () => {
       it('ノードにソート関数を設定', async () => {
         // ノードにソート関数(labelの降順)を設定
         const node1 = treeView.getNode('node1')!
-        node1.setSortFunc((a: CompTreeNode, b: CompTreeNode) => {
+        node1.setSortFunc((a: TreeNode, b: TreeNode) => {
           return a.label > b.label ? -1 : a.label < b.label ? 1 : 0
         })
 
         // ツリービューの子ノードはlabelの降順
-        expect(node1.children.map((node: CompTreeNode) => node.value)).toEqual(['node1_3', 'node1_2', 'node1_1'])
+        expect(node1.children.map((node: TreeNode) => node.value)).toEqual(['node1_3', 'node1_2', 'node1_1'])
 
         verifyTreeView(treeView)
       })
 
       it('ツリービューとノードに別のソート関数を設定', async () => {
         // ツリービューにソート関数(labelの昇順)を設定
-        treeView.setSortFunc((a: CompTreeNode, b: CompTreeNode) => {
+        treeView.setSortFunc((a: TreeNode, b: TreeNode) => {
           return a.label < b.label ? -1 : a.label > b.label ? 1 : 0
         })
         // ノードにソート関数(labelの降順)を設定
         const node1 = treeView.getNode('node1')!
-        node1.setSortFunc((a: CompTreeNode, b: CompTreeNode) => {
+        node1.setSortFunc((a: TreeNode, b: TreeNode) => {
           return a.label > b.label ? -1 : a.label < b.label ? 1 : 0
         })
 
         // ツリービューの子ノードはlabelの昇順
-        expect(treeView.children.map((node: CompTreeNode) => node.value)).toEqual(['node1', 'node2', 'node3'])
+        expect(treeView.children.map((node: TreeNode) => node.value)).toEqual(['node1', 'node2', 'node3'])
         // ノードの子ノードはlabelの降順
-        expect(node1.children.map((node: CompTreeNode) => node.value)).toEqual(['node1_3', 'node1_2', 'node1_1'])
+        expect(node1.children.map((node: TreeNode) => node.value)).toEqual(['node1_3', 'node1_2', 'node1_1'])
 
         verifyTreeView(treeView)
       })
@@ -1864,7 +1861,7 @@ describe('CompTreeNode', () => {
     describe('プロパティ変更による並び順検証', () => {
       describe('ツリービューの子ノード', () => {
         beforeEach(() => {
-          const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+          const wrapper = mount<TreeViewIntl>(TreeView.clazz)
           treeView = wrapper.vm
           treeView.buildTree(
             [
@@ -1874,7 +1871,7 @@ describe('CompTreeNode', () => {
             ],
             {
               // ツリービューにソート関数(labelの降順)を設定
-              sortFunc: (a: CompTreeNode, b: CompTreeNode) => {
+              sortFunc: (a: TreeNode, b: TreeNode) => {
                 return a.label < b.label ? -1 : a.label > b.label ? 1 : 0
               },
             }
@@ -1894,7 +1891,7 @@ describe('CompTreeNode', () => {
           expect(node3.label).toBe(newLabel)
           expect(treeView.getNode(node3.value)!.label).toBe(newLabel)
           // ツリービューの子ノードはlabelの昇順
-          expect(treeView.children.map((node: CompTreeNode) => node.value)).toEqual(['node3', 'node1', 'node2'])
+          expect(treeView.children.map((node: TreeNode) => node.value)).toEqual(['node3', 'node1', 'node2'])
 
           verifyTreeView(treeView)
         })
@@ -1912,7 +1909,7 @@ describe('CompTreeNode', () => {
           expect(node3.label).toBe(newLabel)
           expect(treeView.getNode(node3.value)!.label).toBe(newLabel)
           // ツリービューの子ノードはlabelの昇順
-          expect(treeView.children.map((node: CompTreeNode) => node.value)).toEqual(['node1', 'node3', 'node2'])
+          expect(treeView.children.map((node: TreeNode) => node.value)).toEqual(['node1', 'node3', 'node2'])
 
           verifyTreeView(treeView)
         })
@@ -1930,7 +1927,7 @@ describe('CompTreeNode', () => {
           expect(node1.label).toBe(newLabel)
           expect(treeView.getNode(node1.value)!.label).toBe(newLabel)
           // ツリービューの子ノードはlabelの昇順
-          expect(treeView.children.map((node: CompTreeNode) => node.value)).toEqual(['node2', 'node3', 'node1'])
+          expect(treeView.children.map((node: TreeNode) => node.value)).toEqual(['node2', 'node3', 'node1'])
 
           verifyTreeView(treeView)
         })
@@ -1938,7 +1935,7 @@ describe('CompTreeNode', () => {
 
       describe('ノードの子ノード', () => {
         beforeEach(() => {
-          const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+          const wrapper = mount<TreeViewIntl>(TreeView.clazz)
           treeView = wrapper.vm
           treeView.buildTree(
             [
@@ -1954,7 +1951,7 @@ describe('CompTreeNode', () => {
             ],
             {
               // ツリービューにソート関数(labelの降順)を設定
-              sortFunc: (a: CompTreeNode, b: CompTreeNode) => {
+              sortFunc: (a: TreeNode, b: TreeNode) => {
                 return a.label < b.label ? -1 : a.label > b.label ? 1 : 0
               },
             }
@@ -1975,7 +1972,7 @@ describe('CompTreeNode', () => {
           expect(node1_3.label).toBe(newLabel)
           expect(treeView.getNode(node1_3.value)!.label).toBe(newLabel)
           // ノードの子ノードはlabelの昇順
-          expect(node1.children.map((node: CompTreeNode) => node.value)).toEqual(['node1_3', 'node1_1', 'node1_2'])
+          expect(node1.children.map((node: TreeNode) => node.value)).toEqual(['node1_3', 'node1_1', 'node1_2'])
 
           verifyTreeView(treeView)
         })
@@ -1994,7 +1991,7 @@ describe('CompTreeNode', () => {
           expect(node1_3.label).toBe(newLabel)
           expect(treeView.getNode(node1_3.value)!.label).toBe(newLabel)
           // ノードの子ノードはlabelの昇順
-          expect(node1.children.map((node: CompTreeNode) => node.value)).toEqual(['node1_1', 'node1_3', 'node1_2'])
+          expect(node1.children.map((node: TreeNode) => node.value)).toEqual(['node1_1', 'node1_3', 'node1_2'])
 
           verifyTreeView(treeView)
         })
@@ -2013,7 +2010,7 @@ describe('CompTreeNode', () => {
           expect(node1_1.label).toBe(newLabel)
           expect(treeView.getNode(node1_1.value)!.label).toBe(newLabel)
           // ノードの子ノードはlabelの昇順
-          expect(node1.children.map((node: CompTreeNode) => node.value)).toEqual(['node1_2', 'node1_3', 'node1_1'])
+          expect(node1.children.map((node: TreeNode) => node.value)).toEqual(['node1_2', 'node1_3', 'node1_1'])
 
           verifyTreeView(treeView)
         })
@@ -2023,7 +2020,7 @@ describe('CompTreeNode', () => {
 
   describe('プロパティ値の変更', () => {
     it('labelを変更 - プロパティ変更', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList)
       treeView.buildTree(nodeDataList)
@@ -2039,7 +2036,7 @@ describe('CompTreeNode', () => {
     })
 
     it('labelを変更 - setNodeData()', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList)
       treeView.buildTree(nodeDataList)
@@ -2055,7 +2052,7 @@ describe('CompTreeNode', () => {
     })
 
     it('valueを変更 - プロパティ変更', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList)
       treeView.buildTree(nodeDataList)
@@ -2077,7 +2074,7 @@ describe('CompTreeNode', () => {
     })
 
     it('valueを変更 - setNodeData()', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList)
       treeView.buildTree(nodeDataList)
@@ -2099,7 +2096,7 @@ describe('CompTreeNode', () => {
     })
 
     it('iconを変更 - プロパティ変更', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList)
       treeView.buildTree(nodeDataList)
@@ -2115,7 +2112,7 @@ describe('CompTreeNode', () => {
     })
 
     it('iconを変更 - setNodeData()', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList)
       treeView.buildTree(nodeDataList)
@@ -2131,7 +2128,7 @@ describe('CompTreeNode', () => {
     })
 
     it('iconColorを変更 - プロパティ変更', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList)
       treeView.buildTree(nodeDataList)
@@ -2147,7 +2144,7 @@ describe('CompTreeNode', () => {
     })
 
     it('iconColorを変更 - setNodeData()', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList)
       treeView.buildTree(nodeDataList)
@@ -2163,7 +2160,7 @@ describe('CompTreeNode', () => {
     })
 
     it('openedを変更(trueを設定) - プロパティ変更', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList, [{ value: 'node1_1_1', opened: false }])
       treeView.buildTree(nodeDataList)
@@ -2179,7 +2176,7 @@ describe('CompTreeNode', () => {
     })
 
     it('openedを変更(trueを設定) - setNodeData()', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList, [{ value: 'node1_1_1', opened: false }])
       treeView.buildTree(nodeDataList)
@@ -2195,7 +2192,7 @@ describe('CompTreeNode', () => {
     })
 
     it('openedを変更(falseを設定) - プロパティ変更', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList, [{ value: 'node1_1_1', opened: true }])
       treeView.buildTree(nodeDataList)
@@ -2211,7 +2208,7 @@ describe('CompTreeNode', () => {
     })
 
     it('openedを変更(falseを設定) - setNodeData()', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList, [{ value: 'node1_1_1', opened: true }])
       treeView.buildTree(nodeDataList)
@@ -2227,7 +2224,7 @@ describe('CompTreeNode', () => {
     })
 
     it('unselectableを変更(選択可能から選択不可へ) - プロパティ変更', async () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList, [{ value: 'node1_1_1', selected: false }])
       treeView.buildTree(nodeDataList)
@@ -2255,7 +2252,7 @@ describe('CompTreeNode', () => {
     })
 
     it('unselectableを変更(選択可能から選択不可へ) - setNodeData()', async () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList, [{ value: 'node1_1_1', selected: false }])
       treeView.buildTree(nodeDataList)
@@ -2283,7 +2280,7 @@ describe('CompTreeNode', () => {
     })
 
     it('unselectableを変更(選択不可から選択可能へ) - プロパティ変更', async () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList, [{ value: 'node1_1_1', unselectable: true, selected: false }])
       treeView.buildTree(nodeDataList)
@@ -2311,7 +2308,7 @@ describe('CompTreeNode', () => {
     })
 
     it('unselectableを変更(選択不可から選択可能へ) - setNodeData()', async () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList, [{ value: 'node1_1_1', unselectable: true, selected: false }])
       treeView.buildTree(nodeDataList)
@@ -2339,7 +2336,7 @@ describe('CompTreeNode', () => {
     })
 
     it('unselectableを変更(｢選択可能+選択状態｣から選択不可へ) - プロパティ変更', async () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList)
       treeView.buildTree(nodeDataList)
@@ -2354,7 +2351,7 @@ describe('CompTreeNode', () => {
       // イベント発火を検証
       // ・select-change
       const selectChangeEmitted = wrapper.emitted('select-change')!
-      const selectChangeEvent: CompTreeViewEvent = selectChangeEmitted[0][0]
+      const selectChangeEvent: TreeViewEvent = selectChangeEmitted[0][0]
       expect(selectChangeEmitted.length).toBe(1)
       expect(selectChangeEvent.node).toBe(node1_1_1)
       // ・select
@@ -2370,7 +2367,7 @@ describe('CompTreeNode', () => {
     })
 
     it('unselectableを変更(｢選択可能+選択状態｣から選択不可へ) - setNodeData()', async () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList)
       treeView.buildTree(nodeDataList)
@@ -2385,7 +2382,7 @@ describe('CompTreeNode', () => {
       // イベント発火を検証
       // ・select-change
       const selectChangeEmitted = wrapper.emitted('select-change')!
-      const selectChangeEvent: CompTreeViewEvent = selectChangeEmitted[0][0]
+      const selectChangeEvent: TreeViewEvent = selectChangeEmitted[0][0]
       expect(selectChangeEmitted.length).toBe(1)
       expect(selectChangeEvent.node).toBe(node1_1_1)
       // ・select
@@ -2401,7 +2398,7 @@ describe('CompTreeNode', () => {
     })
 
     it('selectedを変更(未選択から選択へ) - プロパティ変更', async () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList, [{ value: 'node1_1_1', selected: false }])
       treeView.buildTree(nodeDataList)
@@ -2416,13 +2413,13 @@ describe('CompTreeNode', () => {
       // イベント発火を検証
       // ・select-change
       const selectChangeEmitted = wrapper.emitted('select-change')!
-      const selectChangeEvent: CompTreeViewEvent = selectChangeEmitted[0][0]
+      const selectChangeEvent: TreeViewEvent = selectChangeEmitted[0][0]
       expect(selectChangeEmitted.length).toBe(1)
       expect(selectChangeEvent.node).toBe(node1_1_1)
       // ・select
       await sleep(100)
       const selectEmitted = wrapper.emitted('select')!
-      const selectEvent: CompTreeViewEvent = selectEmitted[0][0]
+      const selectEvent: TreeViewEvent = selectEmitted[0][0]
       expect(selectEmitted.length).toBe(1)
       expect(selectEvent.node).toBe(node1_1_1)
       // ノードの選択状態を検証
@@ -2433,7 +2430,7 @@ describe('CompTreeNode', () => {
     })
 
     it('selectedを変更(未選択から選択へ) - setNodeData()', async () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList, [{ value: 'node1_1_1', selected: false }])
       treeView.buildTree(nodeDataList)
@@ -2448,13 +2445,13 @@ describe('CompTreeNode', () => {
       // イベント発火を検証
       // ・select-change
       const selectChangeEmitted = wrapper.emitted('select-change')!
-      const selectChangeEvent: CompTreeViewEvent = selectChangeEmitted[0][0]
+      const selectChangeEvent: TreeViewEvent = selectChangeEmitted[0][0]
       expect(selectChangeEmitted.length).toBe(1)
       expect(selectChangeEvent.node).toBe(node1_1_1)
       // ・select
       await sleep(100)
       const selectEmitted = wrapper.emitted('select')!
-      const selectEvent: CompTreeViewEvent = selectEmitted[0][0]
+      const selectEvent: TreeViewEvent = selectEmitted[0][0]
       expect(selectEmitted.length).toBe(1)
       expect(selectEvent.node).toBe(node1_1_1)
       // ノードの選択状態を検証
@@ -2465,7 +2462,7 @@ describe('CompTreeNode', () => {
     })
 
     it('selectedを変更(未選択から選択へ) - サイレントモード', async () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList, [{ value: 'node1_1_1', selected: false }])
       treeView.buildTree(nodeDataList)
@@ -2491,7 +2488,7 @@ describe('CompTreeNode', () => {
     })
 
     it('selectedを変更(選択から選択へ、つまり変更なし) - プロパティ変更', async () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList)
       treeView.buildTree(nodeDataList)
@@ -2509,7 +2506,7 @@ describe('CompTreeNode', () => {
       // ・select
       await sleep(100)
       const selectEmitted = wrapper.emitted('select')!
-      const selectEvent: CompTreeViewEvent = selectEmitted[0][0]
+      const selectEvent: TreeViewEvent = selectEmitted[0][0]
       expect(selectEmitted.length).toBe(1)
       expect(selectEvent.node).toBe(node1_1_1)
       // ノードの選択状態を検証
@@ -2520,7 +2517,7 @@ describe('CompTreeNode', () => {
     })
 
     it('selectedを変更(選択から選択へ、つまり変更なし) - setNodeData()', async () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList)
       treeView.buildTree(nodeDataList)
@@ -2538,7 +2535,7 @@ describe('CompTreeNode', () => {
       // ・select
       await sleep(100)
       const selectEmitted = wrapper.emitted('select')!
-      const selectEvent: CompTreeViewEvent = selectEmitted[0][0]
+      const selectEvent: TreeViewEvent = selectEmitted[0][0]
       expect(selectEmitted.length).toBe(1)
       expect(selectEvent.node).toBe(node1_1_1)
       // ノードの選択状態を検証
@@ -2549,7 +2546,7 @@ describe('CompTreeNode', () => {
     })
 
     it('selectedを変更(選択から選択へ、つまり変更なし) - サイレントモード', async () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList)
       treeView.buildTree(nodeDataList)
@@ -2575,7 +2572,7 @@ describe('CompTreeNode', () => {
     })
 
     it('selectedを変更(選択から未選択へ) - プロパティ変更', async () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList)
       treeView.buildTree(nodeDataList)
@@ -2590,7 +2587,7 @@ describe('CompTreeNode', () => {
       // イベント発火を検証
       // ・select-change
       const selectChangeEmitted = wrapper.emitted('select-change')!
-      const selectChangeEvent: CompTreeViewEvent = selectChangeEmitted[0][0]
+      const selectChangeEvent: TreeViewEvent = selectChangeEmitted[0][0]
       expect(selectChangeEmitted.length).toBe(1)
       expect(selectChangeEvent.node).toBe(node1_1_1)
       // ・select
@@ -2604,7 +2601,7 @@ describe('CompTreeNode', () => {
     })
 
     it('selectedを変更(選択から未選択へ) - setNodeData()', async () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList)
       treeView.buildTree(nodeDataList)
@@ -2619,7 +2616,7 @@ describe('CompTreeNode', () => {
       // イベント発火を検証
       // ・select-change
       const selectChangeEmitted = wrapper.emitted('select-change')!
-      const selectChangeEvent: CompTreeViewEvent = selectChangeEmitted[0][0]
+      const selectChangeEvent: TreeViewEvent = selectChangeEmitted[0][0]
       expect(selectChangeEmitted.length).toBe(1)
       expect(selectChangeEvent.node).toBe(node1_1_1)
       // ・select
@@ -2633,7 +2630,7 @@ describe('CompTreeNode', () => {
     })
 
     it('selectedを変更(選択から未選択へ) - サイレントモード', async () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList)
       treeView.buildTree(nodeDataList)
@@ -2659,7 +2656,7 @@ describe('CompTreeNode', () => {
     })
 
     it('selectedを変更(現在の選択ノードとは別のノードを選択) - プロパティ変更', async () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList)
       treeView.buildTree(nodeDataList)
@@ -2675,15 +2672,15 @@ describe('CompTreeNode', () => {
       // イベント発火を検証
       // ・select-chang
       const selectChangeEmitted = wrapper.emitted('select-change')!
-      const selectChangeEvent1: CompTreeViewEvent = selectChangeEmitted[0][0]
-      const selectChangeEvent2: CompTreeViewEvent = selectChangeEmitted[1][0]
+      const selectChangeEvent1: TreeViewEvent = selectChangeEmitted[0][0]
+      const selectChangeEvent2: TreeViewEvent = selectChangeEmitted[1][0]
       expect(selectChangeEmitted.length).toBe(2)
       expect(selectChangeEvent1.node).toBe(node1_1_1)
       expect(selectChangeEvent2.node).toBe(node1_1_3)
       // ・select
       await sleep(100)
       const selectEmitted = wrapper.emitted('select')!
-      const selectEvent: CompTreeViewEvent = selectEmitted[0][0]
+      const selectEvent: TreeViewEvent = selectEmitted[0][0]
       expect(selectEmitted.length).toBe(1)
       expect(selectEvent.node).toBe(node1_1_3)
       // ノードの選択状態を検証
@@ -2696,7 +2693,7 @@ describe('CompTreeNode', () => {
     })
 
     it('selectedを変更(現在の選択ノードとは別のノードを選択) - setNodeData()', async () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList)
       treeView.buildTree(nodeDataList)
@@ -2712,15 +2709,15 @@ describe('CompTreeNode', () => {
       // イベント発火を検証
       // ・select-change
       const selectChangeEmitted = wrapper.emitted('select-change')!
-      const selectChangeEvent1: CompTreeViewEvent = selectChangeEmitted[0][0]
-      const selectChangeEvent2: CompTreeViewEvent = selectChangeEmitted[1][0]
+      const selectChangeEvent1: TreeViewEvent = selectChangeEmitted[0][0]
+      const selectChangeEvent2: TreeViewEvent = selectChangeEmitted[1][0]
       expect(selectChangeEmitted.length).toBe(2)
       expect(selectChangeEvent1.node).toBe(node1_1_1)
       expect(selectChangeEvent2.node).toBe(node1_1_3)
       // ・select
       await sleep(100)
       const selectEmitted = wrapper.emitted('select')!
-      const selectEvent: CompTreeViewEvent = selectEmitted[0][0]
+      const selectEvent: TreeViewEvent = selectEmitted[0][0]
       expect(selectEmitted.length).toBe(1)
       expect(selectEvent.node).toBe(node1_1_3)
       // ノードの選択状態を検証
@@ -2733,7 +2730,7 @@ describe('CompTreeNode', () => {
     })
 
     it('selectedを変更(現在の選択ノードとは別のノードを選択) - サイレントモード', async () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList)
       treeView.buildTree(nodeDataList)
@@ -2762,7 +2759,7 @@ describe('CompTreeNode', () => {
     })
 
     it('selectedを変更(選択不可ノードに選択を設定) - プロパティ変更', async () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList, [{ value: 'node1_1_1', unselectable: true, selected: false }])
       treeView.buildTree(nodeDataList)
@@ -2788,7 +2785,7 @@ describe('CompTreeNode', () => {
     })
 
     it('selectedを変更(選択不可ノードに選択を設定) - setNodeData()', async () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList, [{ value: 'node1_1_1', unselectable: true, selected: false }])
       treeView.buildTree(nodeDataList)
@@ -2814,7 +2811,7 @@ describe('CompTreeNode', () => {
     })
 
     it('selectedを変更(選択不可ノードに選択を設定) - プロパティ変更', async () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList, [{ value: 'node1_1_1', unselectable: true, selected: false }])
       treeView.buildTree(nodeDataList)
@@ -2840,7 +2837,7 @@ describe('CompTreeNode', () => {
     })
 
     it('lazyを変更 - プロパティ変更', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList)
       treeView.buildTree(nodeDataList)
@@ -2856,7 +2853,7 @@ describe('CompTreeNode', () => {
     })
 
     it('lazyを変更 - setNodeData()', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList)
       treeView.buildTree(nodeDataList)
@@ -2872,13 +2869,13 @@ describe('CompTreeNode', () => {
     })
 
     it('lazyLoadStatusを変更 - プロパティ変更', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList)
       treeView.buildTree(nodeDataList)
 
       const node1_1 = treeView.getNode('node1_1')!
-      const newLazyLoadStatus: CompTreeViewLazyLoadStatus = 'loaded'
+      const newLazyLoadStatus: TreeViewLazyLoadStatus = 'loaded'
 
       node1_1.lazyLoadStatus = newLazyLoadStatus
 
@@ -2888,13 +2885,13 @@ describe('CompTreeNode', () => {
     })
 
     it('lazyLoadStatusを変更 - setNodeData()', () => {
-      const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+      const wrapper = mount<TreeViewIntl>(TreeView.clazz)
       const treeView = wrapper.vm
       const nodeDataList = editNodeDataList(baseNodeDataList)
       treeView.buildTree(nodeDataList)
 
       const node1_1 = treeView.getNode('node1_1')!
-      const newLazyLoadStatus: CompTreeViewLazyLoadStatus = 'loaded'
+      const newLazyLoadStatus: TreeViewLazyLoadStatus = 'loaded'
 
       node1_1.setNodeData({ lazyLoadStatus: newLazyLoadStatus })
 
@@ -2919,7 +2916,7 @@ describe('カスタムツリー', () => {
               label: 'Node1_1_1',
               value: 'node1_1_1',
               checked: true,
-              nodeClass: CompTreeCheckboxNode.clazz,
+              nodeClass: TreeCheckboxNode.clazz,
             },
           ],
         },
@@ -2928,18 +2925,18 @@ describe('カスタムツリー', () => {
   ]
 
   it('独自イベントが発火されるかを検証', () => {
-    const wrapper = mount<CompTreeViewIntl>(CompTreeView.clazz)
+    const wrapper = mount<TreeViewIntl>(TreeView.clazz)
     const treeView = wrapper.vm
     treeView.buildTree(cloneDeep(baseNodeDataList))
 
-    const node1_1_1 = treeView.getNode<CompTreeCheckboxNode>('node1_1_1')!
+    const node1_1_1 = treeView.getNode<TreeCheckboxNode>('node1_1_1')!
     expect(node1_1_1.checked).toBe(true)
 
     node1_1_1.checked = false
 
     // イベント発火を検証
     const checkedChangeEmitted = wrapper.emitted('checked-change')!
-    const checkedChangeEvent: CompTreeViewEvent = checkedChangeEmitted[0][0]
+    const checkedChangeEvent: TreeViewEvent = checkedChangeEmitted[0][0]
     expect(checkedChangeEmitted.length).toBe(1)
     expect(checkedChangeEvent.node).toBe(node1_1_1)
     // ノードのチェック状態を検証

@@ -10,10 +10,10 @@
     margin: 12px
 
 .tree-view
-  --comp-tree-padding: 0
-  --comp-tree-node-distance: 10px
-  //--comp-tree-node-indent: 20px
-  //--comp-tree-view-font-size: 18px
+  --tree-padding: 0
+  --tree-node-distance: 10px
+  //--tree-node-indent: 20px
+  //--tree-view-font-size: 18px
 
 .operation-row
   > *:not(:last-child)
@@ -23,7 +23,7 @@
 
 <template>
   <div class="TreeViewDemoPage layout vertical">
-    <CompTreeView ref="treeView" class="tree-view" @select-change="treeViewOnSelectChange" @checked-change="treeViewOnCheckedChange" />
+    <TreeView ref="treeView" class="tree-view" @select-change="treeViewOnSelectChange" @checked-change="treeViewOnCheckedChange" />
     <div class="layout vertical app-mt-20">
       <!-- 編集 -->
       <div class="layout horizontal operation-row">
@@ -60,7 +60,7 @@
 </template>
 
 <script lang="ts">
-import { CompTreeCheckboxNode, CompTreeCheckboxNodeData, CompTreeView, CompTreeViewEvent } from '@/components/tree-view'
+import { TreeCheckboxNode, TreeCheckboxNodeData, TreeView, TreeViewEvent } from '@/components/tree-view'
 import { defineComponent, onMounted, reactive, ref } from '@vue/composition-api'
 
 namespace TreeViewDemoPage {
@@ -68,7 +68,7 @@ namespace TreeViewDemoPage {
     name: 'TreeViewDemoPage',
 
     components: {
-      CompTreeView: CompTreeView.clazz,
+      TreeView: TreeView.clazz,
     },
 
     setup(props, context) {
@@ -78,7 +78,7 @@ namespace TreeViewDemoPage {
       //
       //----------------------------------------------------------------------
 
-      const treeView = ref<CompTreeView>()
+      const treeView = ref<TreeView>()
 
       const state = reactive({
         editedInput: {
@@ -125,8 +125,8 @@ namespace TreeViewDemoPage {
                 opened: true,
                 icon: 'folder',
                 children: [
-                  { label: 'node1-1-1', value: 'node1-1-1', checked: true, nodeClass: CompTreeCheckboxNode.clazz },
-                  { label: 'node1-1-2', value: 'node1-1-2', nodeClass: CompTreeCheckboxNode.clazz },
+                  { label: 'node1-1-1', value: 'node1-1-1', checked: true, nodeClass: TreeCheckboxNode.clazz },
+                  { label: 'node1-1-2', value: 'node1-1-2', nodeClass: TreeCheckboxNode.clazz },
                 ],
               },
               {
@@ -156,7 +156,7 @@ namespace TreeViewDemoPage {
             opened: true,
             icon: 'folder',
           },
-        ] as CompTreeCheckboxNodeData[])
+        ] as TreeCheckboxNodeData[])
       })
 
       //----------------------------------------------------------------------
@@ -199,13 +199,13 @@ namespace TreeViewDemoPage {
         }
       }
 
-      function treeViewOnSelectChange(e: CompTreeViewEvent) {
+      function treeViewOnSelectChange(e: TreeViewEvent) {
         console.log(`selected changed: '${e.node.value}'`)
         state.editedInput.nodeValue = e.node.value
         state.editedInput.nodeLabel = e.node.label
       }
 
-      function treeViewOnCheckedChange(e: CompTreeViewEvent) {
+      function treeViewOnCheckedChange(e: TreeViewEvent) {
         console.log(`The checkbox has changed: '${e.node.value}'`)
       }
 

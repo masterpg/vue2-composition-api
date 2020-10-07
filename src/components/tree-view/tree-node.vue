@@ -1,10 +1,10 @@
 <style lang="sass" scoped>
 @import 'src/styles/app.variables'
 
-.CompTreeNode
+.TreeNode
 
 .node-container
-  padding-top: var(--comp-tree-distance, 6px)
+  padding-top: var(--tree-distance, 6px)
   &.eldest
     padding-top: 0
 
@@ -20,7 +20,7 @@
     cursor: pointer
 
 .item-container
-  height: var(--comp-tree-line-height, 26px)
+  height: var(--tree-line-height, 26px)
   cursor: pointer
   white-space: nowrap
   &:hover
@@ -28,28 +28,28 @@
       text-decoration: underline
   &.selected
     .item
-      color: var(--comp-tree-selected-color, $pink-5)
+      color: var(--tree-selected-color, $pink-5)
   &.unselectable
     cursor: default
     .item
-      color: var(--comp-tree-unselectable-color, $grey-9)
+      color: var(--tree-unselectable-color, $grey-9)
     &:hover
       .item
         text-decoration: none
 
 .child-container
-  padding-left: var(--comp-tree-indent, 16px)
+  padding-left: var(--tree-indent, 16px)
   height: 0
   overflow: hidden
 </style>
 
 <template>
-  <div ref="el" class="CompTreeNode">
+  <div ref="el" class="TreeNode">
     <!-- 自ノード -->
     <div ref="nodeContainer" class="node-container layout horizontal center" :class="{ eldest: isEldest }">
       <!-- 遅延ロードアイコン -->
       <div v-show="lazyLoadStatus === 'loading'" ref="lazyLoadIcon" class="icon-container">
-        <comp-loading-spinner size="20px" />
+        <LoadingSpinner size="20px" />
       </div>
       <!-- トグルアイコン -->
       <div v-show="lazyLoadStatus !== 'loading'" class="icon-container">
@@ -89,10 +89,10 @@
 
 <script lang="ts">
 import * as util from '@/components/tree-view/base'
-import { ChildrenSortFunc, CompTreeNodeData, CompTreeNodeEditData, CompTreeNodeParent, CompTreeViewLazyLoadStatus } from '@/components/tree-view/base'
+import { ChildrenSortFunc, TreeNodeData, TreeNodeEditData, TreeNodeParent, TreeViewLazyLoadStatus } from '@/components/tree-view/base'
 import { SetupContext, computed, defineComponent, getCurrentInstance, nextTick, reactive, ref, set } from '@vue/composition-api'
-import { CompLoadingSpinner } from '@/components/loading-spinner'
-import { CompTreeViewIntl } from '@/components/tree-view/comp-tree-view.vue'
+import { LoadingSpinner } from '@/components/loading-spinner'
+import { TreeViewIntl } from '@/components/tree-view/tree-view.vue'
 import Vue from 'vue'
 import anime from 'animejs'
 import debounce from 'lodash/debounce'
@@ -103,9 +103,9 @@ import debounce from 'lodash/debounce'
 //
 //========================================================================
 
-type _CompTreeNode = CompTreeNode<CompTreeNode>
+type _TreeNode = TreeNode<TreeNode>
 
-interface CompTreeNode<FAMILY_NODE extends CompTreeNode = _CompTreeNode> extends Vue {
+interface TreeNode<FAMILY_NODE extends TreeNode = _TreeNode> extends Vue {
   /**
    * ラベルです。
    */
@@ -169,7 +169,7 @@ interface CompTreeNode<FAMILY_NODE extends CompTreeNode = _CompTreeNode> extends
   /**
    * 子ノード読み込みの遅延ロード状態です。
    */
-  lazyLoadStatus: CompTreeViewLazyLoadStatus
+  lazyLoadStatus: TreeViewLazyLoadStatus
 
   /**
    * 自身が最年長のノードかを示すフラグです。
@@ -184,33 +184,33 @@ interface CompTreeNode<FAMILY_NODE extends CompTreeNode = _CompTreeNode> extends
   /**
    * 子ノードの並びを決めるソート関数を取得します。
    */
-  getSortFunc<N extends CompTreeNode = FAMILY_NODE>(): ChildrenSortFunc<N> | null
+  getSortFunc<N extends TreeNode = FAMILY_NODE>(): ChildrenSortFunc<N> | null
 
   /**
    * 子ノードの並びを決めるソート関数を設定します。
    */
-  setSortFunc<N extends CompTreeNode = FAMILY_NODE>(value: ChildrenSortFunc<N> | null): void
+  setSortFunc<N extends TreeNode = FAMILY_NODE>(value: ChildrenSortFunc<N> | null): void
 
   /**
    * 本ノードが所属するツリービューを取得します。
    */
-  getTreeView(): CompTreeViewIntl | null
+  getTreeView(): TreeViewIntl | null
 
   /**
    * ルートノードを取得します。
    */
-  getRootNode<N extends CompTreeNode = FAMILY_NODE>(): N
+  getRootNode<N extends TreeNode = FAMILY_NODE>(): N
 
   /**
    * 子孫ノードを取得します。
    */
-  getDescendants<N extends CompTreeNode = FAMILY_NODE>(): N[]
+  getDescendants<N extends TreeNode = FAMILY_NODE>(): N[]
 
   /**
    * ノードを編集するためのデータを設定します。
    * @param editData
    */
-  setNodeData(editData: CompTreeNodeEditData<CompTreeNodeData>): void
+  setNodeData(editData: TreeNodeEditData<TreeNodeData>): void
 
   /**
    * 子ノードを追加します。
@@ -220,7 +220,7 @@ interface CompTreeNode<FAMILY_NODE extends CompTreeNode = _CompTreeNode> extends
    *   <li>insertIndex: ノード挿入位置。ノードに`sortFunc`が設定されている場合、この値は無視されます。</li>
    * </ul>
    */
-  addChild<N extends CompTreeNode>(child: N, options?: { insertIndex?: number | null }): N
+  addChild<N extends TreeNode>(child: N, options?: { insertIndex?: number | null }): N
 
   /**
    * 子ノードを追加します。
@@ -230,7 +230,7 @@ interface CompTreeNode<FAMILY_NODE extends CompTreeNode = _CompTreeNode> extends
    *   <li>insertIndex: ノード挿入位置。ノードに`sortFunc`が設定されている場合、この値は無視されます。</li>
    * </ul>
    */
-  addChild<N extends CompTreeNode = FAMILY_NODE>(child: CompTreeNodeData, options?: { insertIndex?: number | null }): N
+  addChild<N extends TreeNode = FAMILY_NODE>(child: TreeNodeData, options?: { insertIndex?: number | null }): N
 
   /**
    * 子ノードを削除します。
@@ -262,20 +262,18 @@ interface CompTreeNode<FAMILY_NODE extends CompTreeNode = _CompTreeNode> extends
   close(animated?: boolean): void
 }
 
-type _CompTreeNodeIntl = CompTreeNodeIntl<CompTreeNodeIntl>
+type _TreeNodeIntl = TreeNodeIntl<TreeNodeIntl>
 
-interface CompTreeNodeIntl<FAMILY_NODE extends CompTreeNodeIntl = _CompTreeNodeIntl>
-  extends CompTreeNode<FAMILY_NODE>,
-    CompTreeNodeParent<FAMILY_NODE> {
-  readonly treeView: CompTreeViewIntl
+interface TreeNodeIntl<FAMILY_NODE extends TreeNodeIntl = _TreeNodeIntl> extends TreeNode<FAMILY_NODE>, TreeNodeParent<FAMILY_NODE> {
+  readonly treeView: TreeViewIntl
 
   readonly extraEventNames: string[]
 
-  init(nodeData: CompTreeNodeData): void
+  init(nodeData: TreeNodeData): void
 
   setParent(value: FAMILY_NODE | null): void
 
-  setTreeView(value: CompTreeViewIntl | null): void
+  setTreeView(value: TreeViewIntl | null): void
 
   setIsEldest(value: boolean): void
 
@@ -300,12 +298,12 @@ interface CompTreeNodeIntl<FAMILY_NODE extends CompTreeNodeIntl = _CompTreeNodeI
 //
 //========================================================================
 
-namespace CompTreeNode {
+namespace TreeNode {
   export const clazz = defineComponent({
-    name: 'CompTreeNode',
+    name: 'TreeNode',
 
     components: {
-      CompLoadingSpinner: CompLoadingSpinner.clazz,
+      LoadingSpinner: LoadingSpinner.clazz,
     },
 
     setup: (props: {}, ctx) => setup(props, ctx),
@@ -318,7 +316,7 @@ namespace CompTreeNode {
     //
     //----------------------------------------------------------------------
 
-    const self = getCurrentInstance() as CompTreeNodeIntl
+    const self = getCurrentInstance() as TreeNodeIntl
     const el = ref<HTMLElement>()
     const nodeContainer = ref<HTMLElement>()
     const childContainer = ref<HTMLElement>()
@@ -329,15 +327,15 @@ namespace CompTreeNode {
       treeView: null,
       isEldest: false,
       parent: null,
-      children: [] as CompTreeNodeIntl[],
+      children: [] as TreeNodeIntl[],
       minWidth: 0,
       toggleAnime: null,
     }) as {
-      nodeData: CompTreeNodeData
-      treeView: CompTreeViewIntl | null
+      nodeData: TreeNodeData
+      treeView: TreeViewIntl | null
       isEldest: boolean
-      parent: CompTreeNodeIntl | null
-      children: CompTreeNodeIntl[]
+      parent: TreeNodeIntl | null
+      children: TreeNodeIntl[]
       minWidth: number
       toggleAnime: { resolve: () => void; anime: anime.AnimeInstance } | null
     }
@@ -350,7 +348,7 @@ namespace CompTreeNode {
 
     /**
      * ノードが発火する標準のイベントとは別に、独自で発火するイベント名のリストです。
-     * CompTreeNodeを拡張し、そのノードで独自イベントを発火するよう実装した場合、
+     * TreeNodeを拡張し、そのノードで独自イベントを発火するよう実装した場合、
      * このプロパティに独自イベント名を設定してください。
      */
     const extraEventNames: string[] = []
@@ -408,7 +406,7 @@ namespace CompTreeNode {
       },
     })
 
-    const setSelected: CompTreeNodeIntl['setSelected'] = (selected, silent) => {
+    const setSelected: TreeNodeIntl['setSelected'] = (selected, silent) => {
       setSelectedIntl(selected, { silent })
       resetNodePositionInParentDebounce(self)
     }
@@ -426,7 +424,7 @@ namespace CompTreeNode {
 
     const parent = computed(() => state.parent)
 
-    const setParent: CompTreeNodeIntl['setParent'] = (value: CompTreeNodeIntl | null) => {
+    const setParent: TreeNodeIntl['setParent'] = (value: TreeNodeIntl | null) => {
       state.parent = value
     }
 
@@ -465,7 +463,7 @@ namespace CompTreeNode {
     })
 
     const isEldest = computed(() => state.isEldest)
-    const setIsEldest: CompTreeNodeIntl['setIsEldest'] = value => (state.isEldest = value)
+    const setIsEldest: TreeNodeIntl['setIsEldest'] = value => (state.isEldest = value)
 
     const minWidth = computed(() => {
       setMinWidth()
@@ -501,7 +499,7 @@ namespace CompTreeNode {
     //
     //----------------------------------------------------------------------
 
-    const getSortFunc: CompTreeNodeIntl['getSortFunc'] = () => {
+    const getSortFunc: TreeNodeIntl['getSortFunc'] = () => {
       if (state.nodeData.sortFunc) {
         return state.nodeData.sortFunc
       }
@@ -509,30 +507,30 @@ namespace CompTreeNode {
       return treeView?.getSortFunc() ?? null
     }
 
-    const setSortFunc: CompTreeNodeIntl['setSortFunc'] = value => {
+    const setSortFunc: TreeNodeIntl['setSortFunc'] = value => {
       state.nodeData.sortFunc = value ?? null
       if (children.value.length) {
         sortChildren()
       }
     }
 
-    const getTreeView: CompTreeNodeIntl['getTreeView'] = () => {
+    const getTreeView: TreeNodeIntl['getTreeView'] = () => {
       const rootNode = getRootNode()
       return rootNode.treeView
     }
 
-    const getRootNode: CompTreeNodeIntl['getRootNode'] = () => {
+    const getRootNode: TreeNodeIntl['getRootNode'] = () => {
       if (parent.value) {
         return parent.value.getRootNode()
       }
       return self as any
     }
 
-    const getDescendants: CompTreeNodeIntl['getDescendants'] = () => {
+    const getDescendants: TreeNodeIntl['getDescendants'] = () => {
       return util.getDescendants(self)
     }
 
-    const setTreeView: CompTreeNodeIntl['setTreeView'] = value => {
+    const setTreeView: TreeNodeIntl['setTreeView'] = value => {
       // 自身がルートノードではない場合にツリービューが設定されようとした場合
       // ※ツリービューの設定はルートノードのみに行われます。
       if (parent.value) {
@@ -542,7 +540,7 @@ namespace CompTreeNode {
       state.treeView = value
     }
 
-    const setNodeData: CompTreeNodeIntl['setNodeData'] = editData => {
+    const setNodeData: TreeNodeIntl['setNodeData'] = editData => {
       if (typeof editData.label === 'string') {
         label.value = editData.label!
       }
@@ -595,54 +593,54 @@ namespace CompTreeNode {
      * その追加処理を記述するためのプレースホルダー関数になります。
      */
     const setNodeData_sub = {
-      _value: null as ((nodeData: CompTreeNodeEditData<CompTreeNodeData>) => void) | null,
+      _value: null as ((nodeData: TreeNodeEditData<TreeNodeData>) => void) | null,
       get value() {
         return this._value
       },
-      set value(v: ((nodeData: CompTreeNodeEditData<CompTreeNodeData>) => void) | null) {
+      set value(v: ((nodeData: TreeNodeEditData<TreeNodeData>) => void) | null) {
         this._value = v
       },
     }
 
-    const addChild: CompTreeNodeIntl['addChild'] = (child: CompTreeNodeData | CompTreeNode, options?: { insertIndex?: number | null }) => {
-      let childNode: CompTreeNodeIntl
+    const addChild: TreeNodeIntl['addChild'] = (child: TreeNodeData | TreeNode, options?: { insertIndex?: number | null }) => {
+      let childNode: TreeNodeIntl
       const childType = child instanceof Vue ? 'Node' : 'Data'
 
       switch (childType) {
         // 引数のノードがノードコンポーネントで指定された場合
         case 'Node': {
-          childNode = addChildByNode(child as CompTreeNodeIntl, options)
+          childNode = addChildByNode(child as TreeNodeIntl, options)
           break
         }
         // 引数のノードがノードデータで指定された場合
         case 'Data': {
-          childNode = addChildByData(child as CompTreeNodeData, options)
+          childNode = addChildByData(child as TreeNodeData, options)
         }
       }
 
       return childNode
     }
 
-    const removeChild: CompTreeNodeIntl['removeChild'] = childNode => {
+    const removeChild: TreeNodeIntl['removeChild'] = childNode => {
       removeChildIntl(childNode, true)
     }
 
-    const removeAllChildren: CompTreeNodeIntl['removeAllChildren'] = () => {
+    const removeAllChildren: TreeNodeIntl['removeAllChildren'] = () => {
       for (const node of [...children.value]) {
         removeChild(node)
       }
     }
 
-    const toggle: CompTreeNodeIntl['toggle'] = (animated = true) => {
+    const toggle: TreeNodeIntl['toggle'] = (animated = true) => {
       toggleIntl(!opened.value, animated)
     }
 
-    const open: CompTreeNodeIntl['open'] = (animated = true) => {
+    const open: TreeNodeIntl['open'] = (animated = true) => {
       if (state.nodeData.opened) return
       toggleIntl(true, animated)
     }
 
-    const close: CompTreeNodeIntl['close'] = (animated = true) => {
+    const close: TreeNodeIntl['close'] = (animated = true) => {
       if (!state.nodeData.opened) return
       toggleIntl(false, animated)
     }
@@ -661,7 +659,7 @@ namespace CompTreeNode {
      * ノードの初期化を行います。
      * @param nodeData
      */
-    const init: CompTreeNodeIntl['init'] = nodeData => {
+    const init: TreeNodeIntl['init'] = nodeData => {
       // 任意項目は値が設定されていないとリアクティブにならないのでここで初期化
       set(nodeData, 'icon', nodeData.icon || '')
       set(nodeData, 'iconColor', nodeData.iconColor || '')
@@ -684,11 +682,11 @@ namespace CompTreeNode {
      * その追加処理を記述するためのプレースホルダー関数になります。
      */
     const init_sub = {
-      _value: null as ((nodeData: CompTreeNodeData) => void) | null,
+      _value: null as ((nodeData: TreeNodeData) => void) | null,
       get value() {
         return this._value
       },
-      set value(v: ((nodeData: CompTreeNodeData) => void) | null) {
+      set value(v: ((nodeData: TreeNodeData) => void) | null) {
         this._value = v
       },
     }
@@ -727,7 +725,7 @@ namespace CompTreeNode {
               state.nodeData.selected = value
               // ①select-change
               // > ノードが選択された場合:
-              // >   このイベントをCompTreeViewが受け取り、そこでノード選択が｢再度｣行われ、③selectが発火される
+              // >   このイベントをTreeViewが受け取り、そこでノード選択が｢再度｣行われ、③selectが発火される
               !initializing && util.dispatchSelectChange(self, silent)
             })
           }
@@ -736,7 +734,7 @@ namespace CompTreeNode {
             state.nodeData.selected = value
             // ②select-change
             // > ノードが選択された場合:
-            // >   このイベントをCompTreeViewが受け取り、そこでノード選択が｢再度｣行われ、③selectが発火される
+            // >   このイベントをTreeViewが受け取り、そこでノード選択が｢再度｣行われ、③selectが発火される
             !initializing && util.dispatchSelectChange(self, silent)
           }
         }
@@ -748,7 +746,7 @@ namespace CompTreeNode {
       }
     }
 
-    function addChildByData(childNodeData: CompTreeNodeData, options?: { insertIndex?: number | null }): CompTreeNodeIntl {
+    function addChildByData(childNodeData: TreeNodeData, options?: { insertIndex?: number | null }): TreeNodeIntl {
       const treeView = getTreeView()
       if (!treeView) {
         throw new Error(`'treeView' not found.`)
@@ -761,7 +759,7 @@ namespace CompTreeNode {
       ascendSetBlockForDisplay()
 
       // 子ノードの作成
-      const childNode = util.newCompTreeNode(childNodeData)
+      const childNode = util.newTreeNode(childNodeData)
 
       // ノード挿入位置を決定
       const insertIndex = getInsertIndex(childNode, options)
@@ -799,7 +797,7 @@ namespace CompTreeNode {
       return childNode
     }
 
-    function addChildByNode(childNode: CompTreeNodeIntl, options?: { insertIndex?: number | null }): CompTreeNodeIntl {
+    function addChildByNode(childNode: TreeNodeIntl, options?: { insertIndex?: number | null }): TreeNodeIntl {
       // 追加ノードの子に自ノードが含まれないことを検証
       const descendantDict = util.getDescendantDict(childNode)
       if (descendantDict[value.value]) {
@@ -877,7 +875,7 @@ namespace CompTreeNode {
      * @param isDispatchEvent 削除イベントを発火するか否かを指定
      * @return 削除された場合はtrue, 削除対象のノードがなく削除が行われなかった場合はfalse
      */
-    const removeChildIntl: CompTreeNodeIntl['removeChildIntl'] = (childNode: CompTreeNodeIntl, isDispatchEvent) => {
+    const removeChildIntl: TreeNodeIntl['removeChildIntl'] = (childNode: TreeNodeIntl, isDispatchEvent) => {
       const index = children.value.indexOf(childNode)
       if (index >= 0) {
         isDispatchEvent && util.dispatchBeforeNodeRemove(self, childNode)
@@ -895,7 +893,7 @@ namespace CompTreeNode {
      * 子コンテナからノードを削除します。
      * @param node
      */
-    function removeChildFromContainer(node: CompTreeNodeIntl): void {
+    function removeChildFromContainer(node: TreeNodeIntl): void {
       childContainer.value!.removeChild(node.el)
     }
 
@@ -944,7 +942,7 @@ namespace CompTreeNode {
       })
     }
 
-    const sortChildren: CompTreeNodeIntl['sortChildren'] = () => {
+    const sortChildren: TreeNodeIntl['sortChildren'] = () => {
       const sortFunc = getSortFunc()
       if (!sortFunc) return
 
@@ -954,7 +952,7 @@ namespace CompTreeNode {
       }
     }
 
-    const resetNodePositionInParent: CompTreeViewIntl['resetNodePositionInParent'] = node => {
+    const resetNodePositionInParent: TreeViewIntl['resetNodePositionInParent'] = node => {
       if (node.parent) {
         // 親ノードまたはツリービューにソート関数が指定されていない場合、何もしない
         const sortFunc = node.parent.getSortFunc()
@@ -980,11 +978,11 @@ namespace CompTreeNode {
 
     const resetNodePositionInParentDebounce = debounce(resetNodePositionInParent, 0)
 
-    const getInsertIndex: CompTreeNodeIntl['getInsertIndex'] = (newNode: CompTreeNodeIntl, options) => {
+    const getInsertIndex: TreeNodeIntl['getInsertIndex'] = (newNode: TreeNodeIntl, options) => {
       const sortFunc = getSortFunc()
       // 親ノードまたはツリービューにソート関数が指定されている場合
       if (sortFunc) {
-        const newChildren: CompTreeNodeIntl[] = []
+        const newChildren: TreeNodeIntl[] = []
         if (children.value.includes(newNode)) {
           newChildren.push(...children.value)
         } else {
@@ -1007,7 +1005,7 @@ namespace CompTreeNode {
      * 子ノードが配置されるコンテナの高さを再計算し、高さをリフレッシュします。
      * (アニメーションなしで)
      */
-    const refreshChildContainerHeight: CompTreeNodeIntl['refreshChildContainerHeight'] = () => {
+    const refreshChildContainerHeight: TreeNodeIntl['refreshChildContainerHeight'] = () => {
       ascendSetBlockForDisplay()
 
       // 子ノードコンテナの高さを取得
@@ -1026,7 +1024,7 @@ namespace CompTreeNode {
      * 子ノードが配置されるコンテナの高さを再計算し、高さをリフレッシュします。
      * (アニメーションしながら)
      */
-    const refreshChildContainerHeightWithAnimation: CompTreeNodeIntl['refreshChildContainerHeightWithAnimation'] = () => {
+    const refreshChildContainerHeightWithAnimation: TreeNodeIntl['refreshChildContainerHeightWithAnimation'] = () => {
       const DURATION = 500
 
       return new Promise<void>(resolve => {
@@ -1067,7 +1065,7 @@ namespace CompTreeNode {
      * 子ノードが配置されるコンテナの高さを算出します。
      * @param base 基準となるノードを指定します。このノードの子孫を走査して高さが算出されます。
      */
-    const getChildrenContainerHeight: CompTreeNodeIntl['getChildrenContainerHeight'] = (base: CompTreeNodeIntl) => {
+    const getChildrenContainerHeight: TreeNodeIntl['getChildrenContainerHeight'] = (base: TreeNodeIntl) => {
       let result = 0
 
       if (opened.value) {
@@ -1090,7 +1088,7 @@ namespace CompTreeNode {
      * @param node 追加するノード
      * @param insertIndex ノード挿入位置
      */
-    function insertChildIntoContainer(node: CompTreeNodeIntl, insertIndex: number): void {
+    function insertChildIntoContainer(node: TreeNodeIntl, insertIndex: number): void {
       const childrenLength = childContainer.value!.children.length
 
       // 挿入位置が大きすぎないかを検証
@@ -1116,7 +1114,7 @@ namespace CompTreeNode {
      * をすることができません。この対応として一時的に上位ノードに「display: block」
      * を設定することでサイズ調整が可能になります。
      */
-    const ascendSetBlockForDisplay: CompTreeNodeIntl['ascendSetBlockForDisplay'] = () => {
+    const ascendSetBlockForDisplay: TreeNodeIntl['ascendSetBlockForDisplay'] = () => {
       childContainer.value!.style.display = 'block'
       if (parent.value) {
         parent.value.ascendSetBlockForDisplay()
@@ -1130,7 +1128,7 @@ namespace CompTreeNode {
      * `ascendSetBlockForDisplay()`によって一時的に「display: block」にされていた値を
      * 適切な値に設定し直す役割をします。
      */
-    const ascendSetAnyForDisplay: CompTreeNodeIntl['ascendSetAnyForDisplay'] = () => {
+    const ascendSetAnyForDisplay: TreeNodeIntl['ascendSetAnyForDisplay'] = () => {
       childContainer.value!.style.display = opened.value ? 'block' : 'none'
       if (parent.value) {
         parent.value.ascendSetAnyForDisplay()
@@ -1214,7 +1212,7 @@ namespace CompTreeNode {
       ascendSetAnyForDisplay,
 
       //
-      // CompTreeNodeParent
+      // TreeNodeParent
       //
       el,
       childContainer,
@@ -1244,7 +1242,7 @@ namespace CompTreeNode {
   }
 }
 
-export default CompTreeNode.clazz
+export default TreeNode.clazz
 // eslint-disable-next-line no-undef
-export { CompTreeNode, CompTreeNodeIntl }
+export { TreeNode, TreeNodeIntl }
 </script>
