@@ -1,3 +1,3 @@
-import { CompLoadingSpinner } from './comp-loading-spinner.vue'
+import { LoadingSpinner } from '@/components/loading-spinner/loading-spinner.vue'
 
-export { CompLoadingSpinner }
+export { LoadingSpinner }

@@ -1,12 +1,12 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`CompTreeView buildTree() ベーシックケース 1`] = `
+exports[`TreeView buildTree() ベーシックケース 1`] = `
 <div
-  class="CompTreeView"
+  class="TreeView"
   style="min-width: 0px;"
 >
   <div
-    class="CompTreeNode"
+    class="TreeNode"
   >
     <div
       class="node-container layout horizontal center"
@@ -97,7 +97,7 @@ exports[`CompTreeView buildTree() ベーシックケース 1`] = `
       style="display: block; height: 0px;"
     >
       <div
-        class="CompTreeNode"
+        class="TreeNode"
       >
         <div
           class="node-container layout horizontal center"
@@ -188,7 +188,7 @@ exports[`CompTreeView buildTree() ベーシックケース 1`] = `
           style="display: block; height: 0px;"
         >
           <div
-            class="CompTreeNode"
+            class="TreeNode"
           >
             <div
               class="node-container layout horizontal center"
@@ -272,7 +272,7 @@ exports[`CompTreeView buildTree() ベーシックケース 1`] = `
             />
           </div>
           <div
-            class="CompTreeNode"
+            class="TreeNode"
           >
             <div
               class="node-container layout horizontal center"
@@ -363,7 +363,7 @@ exports[`CompTreeView buildTree() ベーシックケース 1`] = `
             />
           </div>
           <div
-            class="CompTreeNode"
+            class="TreeNode"
           >
             <div
               class="node-container layout horizontal center"
@@ -458,7 +458,7 @@ exports[`CompTreeView buildTree() ベーシックケース 1`] = `
     </div>
   </div>
   <div
-    class="CompTreeNode"
+    class="TreeNode"
   >
     <div
       class="node-container layout horizontal center"

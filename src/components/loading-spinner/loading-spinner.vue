@@ -39,11 +39,11 @@ interface Props {
   readonly color: string
 }
 
-interface CompLoadingSpinner extends Readonly<Props> {}
+interface LoadingSpinner extends Readonly<Props> {}
 
-namespace CompLoadingSpinner {
+namespace LoadingSpinner {
   export const clazz = defineComponent({
-    name: 'CompLoadingSpinner',
+    name: 'LoadingSpinner',
 
     props: {
       size: { type: String, default: '26px' },
@@ -54,6 +54,6 @@ namespace CompLoadingSpinner {
   })
 }
 
-export default CompLoadingSpinner.clazz
-export { CompLoadingSpinner }
+export default LoadingSpinner.clazz
+export { LoadingSpinner }
 </script>

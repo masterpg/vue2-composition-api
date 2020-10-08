@@ -1,6 +1,6 @@
-import { CompTreeNode, CompTreeNodeIntl } from '@/components/tree-view/comp-tree-node.vue'
-import { CompTreeViewIntl } from '@/components/tree-view/comp-tree-view.vue'
+import { TreeNode, TreeNodeIntl } from '@/components/tree-view/tree-node.vue'
 import { Constructor } from 'web-base-lib'
+import { TreeViewIntl } from '@/components/tree-view/tree-view.vue'
 import Vue from 'vue'
 
 //========================================================================
@@ -9,7 +9,7 @@ import Vue from 'vue'
 //
 //========================================================================
 
-interface CompTreeNodeData {
+interface TreeNodeData {
   /**
    * ノードのラベルを指定します。
    */
@@ -43,7 +43,7 @@ interface CompTreeNodeData {
    */
   iconColor?: string
   /**
-   * CompTreeNodeを拡張した場合、拡張したノードのクラスを指定します。
+   * TreeNodeを拡張した場合、拡張したノードのクラスを指定します。
    */
   nodeClass?: Constructor
   /**
@@ -57,39 +57,39 @@ interface CompTreeNodeData {
   /**
    * 子ノード読み込みの遅延ロード状態を指定します。
    */
-  lazyLoadStatus?: CompTreeViewLazyLoadStatus
+  lazyLoadStatus?: TreeViewLazyLoadStatus
   /**
    * 子ノードの並びを決めるソート関数を指定します。
    */
   sortFunc?: ChildrenSortFunc<any> | null
 }
 
-type CompTreeNodeEditData<T> = Partial<Omit<T, 'nodeClass' | 'children'>>
+type TreeNodeEditData<T> = Partial<Omit<T, 'nodeClass' | 'children'>>
 
-type ChildrenSortFunc<N extends CompTreeNode = CompTreeNode> = (a: N, b: N) => number
+type ChildrenSortFunc<N extends TreeNode = TreeNode> = (a: N, b: N) => number
 
-interface CompTreeViewEvent<N extends CompTreeNode = CompTreeNode> {
+interface TreeViewEvent<N extends TreeNode = TreeNode> {
   node: N
 }
 
-type CompTreeViewLazyLoadStatus = 'none' | 'loading' | 'loaded'
+type TreeViewLazyLoadStatus = 'none' | 'loading' | 'loaded'
 
-type CompTreeViewLazyLoadDoneFunc = () => void
+type TreeViewLazyLoadDoneFunc = () => void
 
-interface CompTreeViewLazyLoadEvent<N extends CompTreeNode = CompTreeNode> {
+interface TreeViewLazyLoadEvent<N extends TreeNode = TreeNode> {
   node: N
-  done: CompTreeViewLazyLoadDoneFunc
+  done: TreeViewLazyLoadDoneFunc
 }
 
 //--------------------------------------------------
 //  tree-view Internal
 //--------------------------------------------------
 
-interface CompTreeNodeParent<FAMILY_NODE extends CompTreeNodeIntl = CompTreeNodeIntl> {
+interface TreeNodeParent<FAMILY_NODE extends TreeNodeIntl = TreeNodeIntl> {
   readonly el: HTMLElement
   readonly children: FAMILY_NODE[]
   readonly childContainer: HTMLElement
-  getSortFunc<N extends CompTreeNode = FAMILY_NODE>(): ChildrenSortFunc<N> | null
+  getSortFunc<N extends TreeNode = FAMILY_NODE>(): ChildrenSortFunc<N> | null
   sortChildren(): void
   /**
    * 指定ノードの親コンテナ内における配置位置を再設定します。
@@ -117,10 +117,10 @@ interface NodePropertyChangeDetail {
  * ノードを作成します。
  * @param nodeData
  */
-function newCompTreeNode<N extends CompTreeNode = CompTreeNodeIntl>(nodeData: CompTreeNodeData): N {
+function newTreeNode<N extends TreeNode = TreeNodeIntl>(nodeData: TreeNodeData): N {
   // プログラム的にコンポーネントのインスタンスを生成
   // https://css-tricks.com/creating-vue-js-component-instances-programmatically/
-  const NodeClass = Vue.extend(nodeData.nodeClass || CompTreeNode.clazz)
+  const NodeClass = Vue.extend(nodeData.nodeClass || TreeNode.clazz)
   const node = new NodeClass() as any
   node.init(nodeData)
   node.$mount()
@@ -131,7 +131,7 @@ function newCompTreeNode<N extends CompTreeNode = CompTreeNodeIntl>(nodeData: Co
  * 指定されたノードの子孫を配列で取得します。
  * @param node
  */
-function getDescendants<N extends CompTreeNode = CompTreeNodeIntl>(node: CompTreeNode): N[] {
+function getDescendants<N extends TreeNode = TreeNodeIntl>(node: TreeNode): N[] {
   const getChildren = (node: N) => {
     const result: N[] = []
     for (const child of (node as any).children) {
@@ -153,7 +153,7 @@ function getDescendants<N extends CompTreeNode = CompTreeNodeIntl>(node: CompTre
  * 指定されたノードの子孫をマップで取得します。
  * @param node
  */
-function getDescendantDict<N extends CompTreeNode = CompTreeNodeIntl>(node: CompTreeNode): { [value: string]: N } {
+function getDescendantDict<N extends TreeNode = TreeNodeIntl>(node: TreeNode): { [value: string]: N } {
   const getChildren = (node: N, result: { [value: string]: N }) => {
     for (const child of (node as any).children) {
       result[child.value] = child
@@ -175,7 +175,7 @@ function getDescendantDict<N extends CompTreeNode = CompTreeNodeIntl>(node: Comp
  * @param node
  * @param detail
  */
-function dispatchNodePropertyChange(node: CompTreeNodeIntl, detail: NodePropertyChangeDetail): void {
+function dispatchNodePropertyChange(node: TreeNodeIntl, detail: NodePropertyChangeDetail): void {
   node.el.dispatchEvent(
     new CustomEvent('node-property-change', {
       bubbles: true,
@@ -190,7 +190,7 @@ function dispatchNodePropertyChange(node: CompTreeNodeIntl, detail: NodeProperty
  * ノードが追加された旨を通知するイベントを発火します。
  * @param node
  */
-function dispatchNodeAdd(node: CompTreeNodeIntl): void {
+function dispatchNodeAdd(node: TreeNodeIntl): void {
   node.el.dispatchEvent(
     new CustomEvent('node-add', {
       bubbles: true,
@@ -206,7 +206,7 @@ function dispatchNodeAdd(node: CompTreeNodeIntl): void {
  * @param parent
  * @param child
  */
-function dispatchBeforeNodeRemove(parent: CompTreeViewIntl | CompTreeNodeIntl, child: CompTreeNode): void {
+function dispatchBeforeNodeRemove(parent: TreeViewIntl | TreeNodeIntl, child: TreeNode): void {
   parent.el.dispatchEvent(
     new CustomEvent('before-node-remove', {
       bubbles: true,
@@ -222,7 +222,7 @@ function dispatchBeforeNodeRemove(parent: CompTreeViewIntl | CompTreeNodeIntl, c
  * @param parent
  * @param child
  */
-function dispatchNodeRemove(parent: CompTreeViewIntl | CompTreeNodeIntl, child: CompTreeNode): void {
+function dispatchNodeRemove(parent: TreeViewIntl | TreeNodeIntl, child: TreeNode): void {
   parent.el.dispatchEvent(
     new CustomEvent('node-remove', {
       bubbles: true,
@@ -238,7 +238,7 @@ function dispatchNodeRemove(parent: CompTreeViewIntl | CompTreeNodeIntl, child: 
  * @param node
  * @param silent
  */
-function dispatchSelectChange(node: CompTreeNodeIntl, silent: boolean): void {
+function dispatchSelectChange(node: TreeNodeIntl, silent: boolean): void {
   node.el.dispatchEvent(
     new CustomEvent('select-change', {
       bubbles: true,
@@ -254,7 +254,7 @@ function dispatchSelectChange(node: CompTreeNodeIntl, silent: boolean): void {
  * @param node
  * @param silent
  */
-function dispatchSelect(node: CompTreeNodeIntl, silent: boolean): void {
+function dispatchSelect(node: TreeNodeIntl, silent: boolean): void {
   node.el.dispatchEvent(
     new CustomEvent('select', {
       bubbles: true,
@@ -269,7 +269,7 @@ function dispatchSelect(node: CompTreeNodeIntl, silent: boolean): void {
  * ノードの開閉が変更された旨を通知するイベントを発火します。
  * @param node
  */
-function dispatchOpenChange(node: CompTreeNodeIntl): void {
+function dispatchOpenChange(node: TreeNodeIntl): void {
   node.el.dispatchEvent(
     new CustomEvent('open-change', {
       bubbles: true,
@@ -285,7 +285,7 @@ function dispatchOpenChange(node: CompTreeNodeIntl): void {
  * @param node
  * @param done
  */
-function dispatchLazyLoad(node: CompTreeNodeIntl, done: CompTreeViewLazyLoadDoneFunc): void {
+function dispatchLazyLoad(node: TreeNodeIntl, done: TreeViewLazyLoadDoneFunc): void {
   node.el.dispatchEvent(
     new CustomEvent('lazy-load', {
       bubbles: true,
@@ -302,7 +302,7 @@ function dispatchLazyLoad(node: CompTreeNodeIntl, done: CompTreeViewLazyLoadDone
  * @param extraEventName
  * @param detail
  */
-function dispatchExtraEvent<T>(node: CompTreeNodeIntl, extraEventName: string, detail?: T): void {
+function dispatchExtraEvent<T>(node: TreeNodeIntl, extraEventName: string, detail?: T): void {
   node.el.dispatchEvent(
     new CustomEvent(extraEventName, {
       bubbles: true,
@@ -442,14 +442,14 @@ function toFloat(value?: string): number {
 
 export {
   ChildrenSortFunc,
-  CompTreeNodeData,
-  CompTreeNodeEditData,
-  CompTreeNodeParent,
-  CompTreeViewEvent,
-  CompTreeViewLazyLoadDoneFunc,
-  CompTreeViewLazyLoadEvent,
-  CompTreeViewLazyLoadStatus,
   NodePropertyChangeDetail,
+  TreeNodeData,
+  TreeNodeEditData,
+  TreeNodeParent,
+  TreeViewEvent,
+  TreeViewLazyLoadDoneFunc,
+  TreeViewLazyLoadEvent,
+  TreeViewLazyLoadStatus,
   dispatchBeforeNodeRemove,
   dispatchExtraEvent,
   dispatchLazyLoad,
@@ -465,6 +465,6 @@ export {
   getElementFrameWidth,
   getElementHeight,
   getElementWidth,
-  newCompTreeNode,
+  newTreeNode,
   toFloat,
 }

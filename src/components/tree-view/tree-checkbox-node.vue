@@ -1,10 +1,10 @@
 <style lang="sass" scoped>
 @import 'src/styles/app.variables'
 
-.CompTreeCheckboxNode
+.TreeCheckboxNode
 
 .node-container
-  padding-top: var(--comp-tree-distance, 6px)
+  padding-top: var(--tree-distance, 6px)
   &.eldest
     padding-top: 0
 
@@ -20,7 +20,7 @@
     cursor: pointer
 
 .item-container
-  height: var(--comp-tree-line-height, 26px)
+  height: var(--tree-line-height, 26px)
   cursor: pointer
   white-space: nowrap
   &:hover
@@ -28,28 +28,28 @@
       text-decoration: underline
   &.selected
     .item
-      color: var(--comp-tree-selected-color, $pink-5)
+      color: var(--tree-selected-color, $pink-5)
   &.unselectable
     cursor: default
     .item
-      color: var(--comp-tree-unselectable-color, $grey-9)
+      color: var(--tree-unselectable-color, $grey-9)
     &:hover
       .item
         text-decoration: none
 
 .child-container
-  padding-left: var(--comp-tree-indent, 16px)
+  padding-left: var(--tree-indent, 16px)
   height: 0
   overflow: hidden
 </style>
 
 <template>
-  <div ref="el" class="CompTreeCheckboxNode">
+  <div ref="el" class="TreeCheckboxNode">
     <!-- 自ノード -->
     <div ref="nodeContainer" class="node-container layout horizontal center" :class="{ eldest: isEldest }">
       <!-- 遅延ロードアイコン -->
       <div v-show="lazyLoadStatus === 'loading'" ref="lazyLoadIcon" class="icon-container">
-        <comp-loading-spinner size="20px" />
+        <LoadingSpinner size="20px" />
       </div>
       <!-- トグルアイコン -->
       <div v-show="lazyLoadStatus !== 'loading'" class="icon-container">
@@ -90,9 +90,9 @@
 
 <script lang="ts">
 import { computed, defineComponent, set } from '@vue/composition-api'
-import { CompLoadingSpinner } from '@/components/loading-spinner'
-import { CompTreeNode } from '@/components/tree-view/comp-tree-node.vue'
-import { CompTreeNodeData } from '@/components/tree-view/base'
+import { LoadingSpinner } from '@/components/loading-spinner'
+import { TreeNode } from '@/components/tree-view/tree-node.vue'
+import { TreeNodeData } from '@/components/tree-view/base'
 
 //========================================================================
 //
@@ -100,11 +100,11 @@ import { CompTreeNodeData } from '@/components/tree-view/base'
 //
 //========================================================================
 
-interface CompTreeCheckboxNode extends CompTreeNode<CompTreeCheckboxNode> {
+interface TreeCheckboxNode extends TreeNode<TreeCheckboxNode> {
   checked: boolean
 }
 
-interface CompTreeCheckboxNodeData extends CompTreeNodeData {
+interface TreeCheckboxNodeData extends TreeNodeData {
   checked?: boolean
 }
 
@@ -114,21 +114,21 @@ interface CompTreeCheckboxNodeData extends CompTreeNodeData {
 //
 //========================================================================
 
-namespace CompTreeCheckboxNode {
+namespace TreeCheckboxNode {
   export const clazz = defineComponent({
-    name: 'CompTreeCheckboxNode',
+    name: 'TreeCheckboxNode',
 
     components: {
-      CompLoadingSpinner: CompLoadingSpinner.clazz,
+      LoadingSpinner: LoadingSpinner.clazz,
     },
 
     setup(props: {}, context) {
-      const base = CompTreeNode.setup(props, context)
-      const nodeData = computed<CompTreeCheckboxNodeData>(() => base.state.nodeData)
+      const base = TreeNode.setup(props, context)
+      const nodeData = computed<TreeCheckboxNodeData>(() => base.state.nodeData)
 
       base.extraEventNames.push('checked-change')
 
-      base.init_sub.value = (nodeData: CompTreeCheckboxNodeData) => {
+      base.init_sub.value = (nodeData: TreeCheckboxNodeData) => {
         set(nodeData, 'checked', Boolean(nodeData.checked))
       }
 
@@ -151,7 +151,7 @@ namespace CompTreeCheckboxNode {
   })
 }
 
-export default CompTreeCheckboxNode.clazz
+export default TreeCheckboxNode.clazz
 // eslint-disable-next-line no-undef
-export { CompTreeCheckboxNode, CompTreeCheckboxNodeData }
+export { TreeCheckboxNode, TreeCheckboxNodeData }
 </script>
