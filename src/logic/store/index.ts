@@ -59,5 +59,5 @@ function validateStoreProvided(): void {
 //
 //========================================================================
 
-export { StoreUtil } from '@/logic/store/base'
 export { StoreContainer, StoreKey, createStore, provideStore, injectStore, validateStoreProvided }
+export { generateId } from '@/logic/store/base'

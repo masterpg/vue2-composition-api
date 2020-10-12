@@ -1,4 +1,4 @@
-import { CartItem, Product } from '@/logic/types'
+import { CartItem, Product } from '@/logic/base'
 import { ComputedRef, watch } from '@vue/composition-api'
 import { DeepReadonly } from 'web-base-lib'
 import { injectAPI } from '@/logic/api'

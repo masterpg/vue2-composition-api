@@ -1,6 +1,5 @@
 import { DeepReadonly } from 'web-base-lib'
-import { StoreUtil } from '@/logic/store/base'
-import { User } from '@/logic/types'
+import { User } from '@/logic/base'
 import dayjs from 'dayjs'
 import { reactive } from '@vue/composition-api'
 
@@ -50,7 +49,7 @@ function createUserStore(): UserStore {
   //----------------------------------------------------------------------
 
   const set: UserStore['set'] = user => {
-    return StoreUtil.populateUser(user, state.value)
+    return User.populate(user, state.value)
   }
 
   const clear: UserStore['clear'] = () => {

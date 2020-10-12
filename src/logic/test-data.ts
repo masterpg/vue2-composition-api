@@ -1,4 +1,4 @@
-import { CartItem, Product, User } from '@/logic/types'
+import { User } from '@/logic/base'
 import dayjs from 'dayjs'
 
 namespace TestData {

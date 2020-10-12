@@ -2,8 +2,8 @@ import { APIContainer, CartItemEditResponse } from '@/logic/api'
 import { CartItem, Product } from '@/logic'
 import { InternalAuthLogic } from '@/logic/modules/internal'
 import { ShopLogic } from '@/logic/modules/shop'
-import { StoreUtil } from '@/logic/store/base'
 import dayjs from 'dayjs'
+import { generateId } from '@/logic/store'
 import { provideDependency } from '../../../../helpers'
 
 //========================================================================
@@ -108,12 +108,12 @@ describe('ShopLogic', () => {
   describe('addItemToCart', () => {
     it('ベーシックケース - 追加', async () => {
       // 現在の商品の在庫数を設定
-      const products = StoreUtil.cloneProducts(PRODUCTS)
+      const products = Product.clone(PRODUCTS)
       const product3 = products[2]
       product3.stock = 10
       // API実行後のレスポンスオブジェクト
       const response: CartItemEditResponse = {
-        id: StoreUtil.generateId(),
+        id: generateId(),
         uid: 'taro.yamada',
         productId: product3.id,
         title: product3.title,
@@ -165,7 +165,7 @@ describe('ShopLogic', () => {
 
     it('ベーシックケース - 更新', async () => {
       // 現在の商品の在庫数を設定
-      const products = StoreUtil.cloneProducts(PRODUCTS)
+      const products = Product.clone(PRODUCTS)
       const product1 = products[0]
       product1.stock = 10
       // API実行後のレスポンスオブジェクト
@@ -216,7 +216,7 @@ describe('ShopLogic', () => {
     })
 
     it('在庫が足りなかった場合', async () => {
-      const products = StoreUtil.cloneProducts(PRODUCTS)
+      const products = Product.clone(PRODUCTS)
       const product1 = products[0]
       // 現在の商品の在庫数を設定
       product1.stock = 0
@@ -274,11 +274,11 @@ describe('ShopLogic', () => {
   describe('removeItemFromCart', () => {
     it('ベーシックケース - 更新', async () => {
       // 現在の商品の在庫数を設定
-      const products = StoreUtil.cloneProducts(PRODUCTS)
+      const products = Product.clone(PRODUCTS)
       const product1 = products[0]
       product1.stock = 10
       // 現在のカートの数量を設定
-      const cartItems = StoreUtil.cloneCartItems(CART_ITEMS)
+      const cartItems = CartItem.clone(CART_ITEMS)
       const cartItem1 = cartItems[0]
       cartItem1.quantity = 2
       // API実行後のレスポンスオブジェクト
@@ -329,11 +329,11 @@ describe('ShopLogic', () => {
 
     it('ベーシックケース - 削除', async () => {
       // 現在の商品の在庫数を設定
-      const products = StoreUtil.cloneProducts(PRODUCTS)
+      const products = Product.clone(PRODUCTS)
       const product1 = products[0]
       product1.stock = 10
       // 現在のカートの数量を設定
-      const cartItems = StoreUtil.cloneCartItems(CART_ITEMS)
+      const cartItems = CartItem.clone(CART_ITEMS)
       const cartItem1 = cartItems[0]
       cartItem1.quantity = 1
       // API実行後のレスポンスオブジェクト
@@ -378,7 +378,7 @@ describe('ShopLogic', () => {
     it('APIでエラーが発生した場合', async () => {
       const product1 = PRODUCTS[0]
       // 現在のカートの数量を設定
-      const cartItems = StoreUtil.cloneCartItems(CART_ITEMS)
+      const cartItems = CartItem.clone(CART_ITEMS)
       const cartItem1 = cartItems[0]
       cartItem1.quantity = 1
 

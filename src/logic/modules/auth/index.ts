@@ -1,7 +1,7 @@
 import { ComputedRef } from '@vue/composition-api'
 import { DeepReadonly } from 'web-base-lib'
 import { TestData } from '@/logic/test-data'
-import { User } from '@/logic/types'
+import { User } from '@/logic/base'
 import { injectInternalLogic } from '@/logic/modules/internal'
 import { injectStore } from '@/logic/store'
 

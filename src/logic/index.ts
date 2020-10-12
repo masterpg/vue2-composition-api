@@ -67,6 +67,5 @@ function validateLogicProvided(): void {
 //
 //========================================================================
 
-export * from '@/logic/types'
-export { StoreUtil } from '@/logic/store'
 export { LogicContainer, LogicKey, provideLogic, injectLogic, validateLogicProvided }
+export * from '@/logic/base'
