@@ -21,7 +21,7 @@ interface APIConfig {
   baseURL: string
 }
 
-interface CreateConfigParam {
+interface CreateConfigParams {
   api?: DeepPartial<Omit<APIConfig, 'baseURL'>>
 }
 
@@ -50,7 +50,7 @@ function getAPIConfig(apiConfig: Omit<APIConfig, 'baseURL'>): APIConfig {
   }
 }
 
-function createConfig(param: CreateConfigParam = {}): Config {
+function createConfig(params: CreateConfigParams = {}): Config {
   //----------------------------------------------------------------------
   //
   //  Variables
@@ -66,7 +66,7 @@ function createConfig(param: CreateConfigParam = {}): Config {
           port: Number(process.env.VUE_APP_API_PORT),
           basePath: String(process.env.VUE_APP_API_BASE_PATH),
         },
-        param.api
+        params.api
       )
     ),
   })
@@ -82,8 +82,8 @@ function createConfig(param: CreateConfigParam = {}): Config {
   }
 }
 
-function provideConfig(param: CreateConfigParam = {}): void {
-  provide(ConfigKey, createConfig(param))
+function provideConfig(params: CreateConfigParams = {}): void {
+  provide(ConfigKey, createConfig(params))
 }
 
 function injectConfig(): Config {
