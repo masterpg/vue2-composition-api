@@ -24,8 +24,8 @@
           Vue2 Composition API
         </q-toolbar-title>
 
-        <div v-show="state.isSignedIn" class="app-mr-16">{{ state.user.displayName }}</div>
         <div class="app-mr-16">Quasar v{{ $q.version }}</div>
+        <div v-show="state.isSignedIn" class="app-mr-16">{{ state.user.displayName }}</div>
 
         <q-btn flat round dense color="white" icon="more_vert">
           <q-menu>
@@ -70,6 +70,7 @@ import { injectServiceWorker, provideServiceWorker } from '@/service-worker'
 import { Notify } from 'quasar'
 import { Platform } from 'quasar'
 import { provideConfig } from '@/config'
+import router from '@/router'
 import { useI18n } from '@/i18n'
 
 export default defineComponent({
@@ -102,19 +103,19 @@ export default defineComponent({
       pages: [
         {
           title: 'Home',
-          path: '/home',
+          path: router.views.home.getPath(),
         },
         {
           title: 'ABC',
-          path: '/abc',
+          path: router.views.abc.getPath(),
         },
         {
           title: 'Shop',
-          path: '/shop',
+          path: router.views.shop.getPath(),
         },
         {
           title: 'TreeView',
-          path: '/tree',
+          path: router.views.tree.getPath(),
         },
       ] as { title: string; path: string }[],
 

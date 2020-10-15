@@ -4,40 +4,87 @@ import Vue from 'vue'
 
 Vue.use(VueRouter)
 
-const routes: Array<RouteConfig> = [
-  {
-    path: '/home',
-    name: 'Home',
-    component: HomePage,
-  },
-  {
-    path: '/abc',
-    name: 'ABC',
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    component: () => import(/* webpackChunkName: "about" */ '@/views/abc'),
-  },
-  {
-    path: '/shop',
-    name: 'Shop',
-    component: () => import(/* webpackChunkName: "about" */ '@/views/shop'),
-  },
-  {
-    path: '/tree',
-    name: 'TreeView',
-    component: () => import(/* webpackChunkName: "about" */ '@/views/tree-view'),
-  },
-  {
-    path: '*',
-    redirect: '/home',
-  },
-]
+//========================================================================
+//
+//  Implementation
+//
+//========================================================================
 
-const router = new VueRouter({
-  mode: 'history',
-  base: process.env.BASE_URL,
-  routes,
-})
+/**
+ * `routePath`の中にある変数プレースホルダーを`params`で指定された値に置き換えます。
+ * 例えば`routePath`に'/post/:year/:month'が指定された場合、':year'と':month'を`params`で置き換えます。
+ * @param routePath
+ * @param params
+ */
+function replaceRouteParams(routePath: string, ...params: string[]): string {
+  let result = routePath
+  const pattern = /(:\w+)/
+  for (const param of params) {
+    result = result.replace(pattern, param)
+  }
+  return result
+}
+
+const home: RouteConfig & { getPath(): string } = {
+  path: '/home',
+  name: 'Home',
+  component: HomePage,
+  getPath(): string {
+    return home.path
+  },
+}
+
+const abc: RouteConfig & { getPath(): string } = {
+  path: '/abc',
+  name: 'ABC',
+  // route level code-splitting
+  // this generates a separate chunk (about.[hash].js) for this route
+  // which is lazy-loaded when the route is visited.
+  component: () => import(/* webpackChunkName: "about" */ '@/views/abc'),
+  getPath(): string {
+    return abc.path
+  },
+}
+
+const shop: RouteConfig & { getPath(): string } = {
+  path: '/shop',
+  name: 'Shop',
+  component: () => import(/* webpackChunkName: "about" */ '@/views/shop'),
+  getPath(): string {
+    return shop.path
+  },
+}
+
+const tree: RouteConfig & { getPath(): string } = {
+  path: '/tree',
+  name: 'TreeView',
+  component: () => import(/* webpackChunkName: "about" */ '@/views/tree-view'),
+  getPath(): string {
+    return tree.path
+  },
+}
+
+const fallback: RouteConfig = {
+  path: '*',
+  redirect: '/home',
+}
+
+const router = new (class extends VueRouter {
+  constructor() {
+    super({
+      mode: 'history',
+      base: process.env.BASE_URL,
+      routes: [home, abc, shop, tree, fallback],
+    })
+  }
+
+  readonly views = { home, abc, shop, tree, fallback }
+})()
+
+//========================================================================
+//
+//  Exports
+//
+//========================================================================
 
 export default router
