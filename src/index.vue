@@ -57,11 +57,14 @@
     <q-page-container class="page">
       <router-view />
     </q-page-container>
+
+    <Dialogs ref="dialogsRef" />
   </q-layout>
 </template>
 
 <script lang="ts">
-import { defineComponent, reactive } from '@vue/composition-api'
+import { Dialogs, injectDialogs, provideDialogs } from '@/dialogs'
+import { defineComponent, reactive, ref } from '@vue/composition-api'
 import { injectLogic, provideLogic } from '@/logic'
 import { injectServiceWorker, provideServiceWorker } from '@/service-worker'
 import { Notify } from 'quasar'
@@ -70,6 +73,10 @@ import { provideConfig } from '@/config'
 import { useI18n } from '@/i18n'
 
 export default defineComponent({
+  components: {
+    Dialogs: Dialogs.clazz,
+  },
+
   setup() {
     //----------------------------------------------------------------------
     //
@@ -84,6 +91,10 @@ export default defineComponent({
     const logic = injectLogic()
     const serviceWorker = injectServiceWorker()
     const { t } = useI18n()
+
+    const dialogsRef = ref<Dialogs>()
+    provideDialogs(dialogsRef)
+    const dialogs = injectDialogs()
 
     const state = reactive({
       leftDrawerOpen: Platform.is.desktop,
@@ -161,6 +172,7 @@ export default defineComponent({
     return {
       t,
       state,
+      dialogsRef,
       signInMenuItemOnClick,
       signOutMenuItemOnClick,
     }
