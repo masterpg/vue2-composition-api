@@ -296,6 +296,6 @@ index.put('/cartItems/checkout', (req, res, next) => {
 index.use(router)
 
 // json-server起動
-index.listen(5031, () => {
-  console.log('API Server running at: http://localhost:5031/')
+index.listen(5042, () => {
+  console.log('API Server running at: http://localhost:5042/')
 })

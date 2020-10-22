@@ -88,7 +88,7 @@ module.exports = {
   },
 
   devServer: {
-    port: 5030,
+    port: 5040,
     host: '0.0.0.0',
     disableHostCheck: true,
   },
