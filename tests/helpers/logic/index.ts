@@ -1,10 +1,43 @@
-import { Entity } from '@/logic'
+import { Entity, LogicContainer } from '@/logic'
+import { InternalLogic } from '@/logic/modules/internal'
+import { StoreContainer } from '@/logic/store'
+import { TestAPIContainer } from './api'
+
+//========================================================================
+//
+//  Interfaces
+//
+//========================================================================
+
+interface TestLogicContainer extends LogicContainer {}
+
+interface TestLogicDependency {
+  api: TestAPIContainer
+  store: StoreContainer
+  internal: InternalLogic
+}
 
 //========================================================================
 //
 //  Implementation
 //
 //========================================================================
+
+namespace TestLogicContainer {
+  export function newInstance(): TestLogicContainer & { readonly dependency: TestLogicDependency } {
+    const api = TestAPIContainer.newInstance()
+    const store = StoreContainer.newInstance()
+    const internal = InternalLogic.newInstance()
+    const dependency = { api, store, internal }
+
+    const base = LogicContainer.newRawInstance(dependency)
+
+    return {
+      ...base,
+      dependency,
+    }
+  }
+}
 
 /**
  * 指定されたアイテムがコピーであることを検証します。
@@ -29,4 +62,5 @@ function expectNotToBeCopyEntity<T extends Entity>(actual: T | T[], expected: T 
 //
 //========================================================================
 
-export { expectNotToBeCopyEntity }
+export { TestLogicContainer, expectNotToBeCopyEntity }
+export * from './api'

@@ -16,14 +16,11 @@ const RAW_PRODUCTS: RawProduct[] = [
   { id: 'product4', title: 'Surface Go', price: 54290, stock: 0, createdAt: '2020-01-01T00:00:00.000Z', updatedAt: '2020-01-02T00:00:00.000Z' },
 ]
 
-const PRODUCTS: Product[] = RAW_PRODUCTS.map(apiProduct => {
-  const { createdAt, updatedAt, ...body } = apiProduct
-  return {
-    ...body,
-    createdAt: dayjs(createdAt),
-    updatedAt: dayjs(updatedAt),
-  }
-})
+const PRODUCTS: Product[] = RAW_PRODUCTS.map(rawProduct => ({
+  ...rawProduct,
+  createdAt: dayjs(rawProduct.createdAt),
+  updatedAt: dayjs(rawProduct.updatedAt),
+}))
 
 const RAW_CART_ITEMS: RawCartItem[] = [
   {
@@ -48,14 +45,11 @@ const RAW_CART_ITEMS: RawCartItem[] = [
   },
 ]
 
-const CART_ITEMS: CartItem[] = RAW_CART_ITEMS.map(apiCartItem => {
-  const { createdAt, updatedAt, ...body } = apiCartItem
-  return {
-    ...body,
-    createdAt: dayjs(createdAt),
-    updatedAt: dayjs(updatedAt),
-  }
-})
+const CART_ITEMS: CartItem[] = RAW_CART_ITEMS.map(rawCartItem => ({
+  ...rawCartItem,
+  createdAt: dayjs(rawCartItem.createdAt),
+  updatedAt: dayjs(rawCartItem.updatedAt),
+}))
 
 //========================================================================
 //

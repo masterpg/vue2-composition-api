@@ -1,7 +1,6 @@
-import { CartStore, createCartStore } from '@/logic/store/cart'
-import { InjectionKey, inject, provide } from '@vue/composition-api'
-import { ProductStore, createProductStore } from '@/logic/store/product'
-import { UserStore, createUserStore } from '@/logic/store/user'
+import { CartStore } from '@/logic/store/cart'
+import { ProductStore } from '@/logic/store/product'
+import { UserStore } from '@/logic/store/user'
 
 //========================================================================
 //
@@ -21,36 +20,36 @@ interface StoreContainer {
 //
 //========================================================================
 
-const StoreKey: InjectionKey<StoreContainer> = Symbol('Store')
+namespace StoreContainer {
+  export function newInstance(): StoreContainer {
+    return newRawInstance()
+  }
 
-function createStore(): StoreContainer {
-  return {
-    user: createUserStore(),
-    product: createProductStore(),
-    cart: createCartStore(),
+  export function newRawInstance() {
+    const user = UserStore.newRawInstance()
+    const product = ProductStore.newRawInstance()
+    const cart = CartStore.newRawInstance()
+    return { user, product, cart }
   }
 }
 
-function provideStore(store?: StoreContainer | typeof createStore): void {
-  let instance: StoreContainer
-  if (!store) {
-    instance = createStore()
-  } else {
-    instance = typeof store === 'function' ? store() : store
-  }
-  provide(StoreKey, instance)
+//========================================================================
+//
+//  Dependency Injection
+//
+//========================================================================
+
+let instance: StoreContainer
+
+function provideStore(store: StoreContainer): void {
+  instance = store
 }
 
 function injectStore(): StoreContainer {
-  validateStoreProvided()
-  return inject(StoreKey)!
-}
-
-function validateStoreProvided(): void {
-  const value = inject(StoreKey)
-  if (!value) {
-    throw new Error(`${StoreKey.description} is not provided`)
+  if (!instance) {
+    throw new Error(`'StoreContainer' is not provided`)
   }
+  return instance
 }
 
 //========================================================================
@@ -59,5 +58,5 @@ function validateStoreProvided(): void {
 //
 //========================================================================
 
-export { StoreContainer, StoreKey, createStore, provideStore, injectStore, validateStoreProvided }
+export { StoreContainer, injectStore, provideStore }
 export { generateId } from '@/logic/store/base'

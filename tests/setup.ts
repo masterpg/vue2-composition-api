@@ -3,6 +3,7 @@ import VueCompositionApi from '@vue/composition-api'
 import { clearProvidedDependency } from './helpers'
 import { createI18n } from '@/i18n'
 import { quasar } from '@/quasar'
+import { setupConfig } from '@/config'
 import td from 'testdouble'
 
 //
@@ -28,6 +29,7 @@ require('testdouble-jest')(td, jest)
 quasar.setup()
 
 beforeEach(async () => {
+  setupConfig()
   const i18n = createI18n()
   await i18n.load()
 })

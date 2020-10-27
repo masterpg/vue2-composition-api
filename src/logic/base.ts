@@ -1,5 +1,8 @@
 import dayjs, { Dayjs } from 'dayjs'
+import { APIContainer } from '@/logic/api'
 import { DeepPartial } from 'web-base-lib'
+import { InternalLogic } from '@/logic/modules/internal'
+import { StoreContainer } from '@/logic/store'
 
 //========================================================================
 //
@@ -7,24 +10,23 @@ import { DeepPartial } from 'web-base-lib'
 //
 //========================================================================
 
-//--------------------------------------------------
-//  Foundation
-//--------------------------------------------------
+type OmitEntityTimestamp<T> = Omit<T, 'createdAt' | 'updatedAt'>
 
 interface Entity {
   id: string
 }
 
-interface TimestampEntity extends Entity {
-  createdAt: Dayjs
-  updatedAt: Dayjs
+type TimestampEntity<T = {}> = Entity &
+  OmitEntityTimestamp<T> & {
+    createdAt: Dayjs
+    updatedAt: Dayjs
+  }
+
+interface LogicDependency {
+  api: APIContainer
+  store: StoreContainer
+  internal: InternalLogic
 }
-
-type OmitEntityTimestamp<T> = Omit<T, 'createdAt' | 'updatedAt'>
-
-//--------------------------------------------------
-//  Application
-//--------------------------------------------------
 
 interface User extends TimestampEntity {
   email: string
@@ -114,4 +116,4 @@ namespace CartItem {
 //
 //========================================================================
 
-export { Entity, TimestampEntity, OmitEntityTimestamp, User, Product, CartItem }
+export { CartItem, Entity, LogicDependency, OmitEntityTimestamp, Product, TimestampEntity, User }

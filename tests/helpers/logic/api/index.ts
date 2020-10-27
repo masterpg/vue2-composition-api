@@ -1,4 +1,4 @@
-import { APIContainer, APIContainerImpl, createAPI } from '@/logic/api'
+import { APIContainer } from '@/logic/api'
 
 //========================================================================
 //
@@ -10,22 +10,29 @@ interface TestAPIContainer extends APIContainer {
   putTestData(testData: any): Promise<void>
 }
 
+type APIContainerImpl = ReturnType<typeof APIContainer['newRawInstance']>
+
 //========================================================================
 //
 //  Implementation
 //
 //========================================================================
 
-function createTestAPI(): TestAPIContainer {
-  const api = createAPI() as APIContainerImpl
-
-  const putTestData: TestAPIContainer['putTestData'] = async testData => {
-    await api.client.put('testData', testData)
+namespace TestAPIContainer {
+  export function newInstance(): TestAPIContainer {
+    const api = APIContainer.newRawInstance()
+    return mix(api)
   }
 
-  return {
-    ...api,
-    putTestData,
+  export function mix<T extends APIContainerImpl>(api: T): TestAPIContainer & T {
+    const putTestData: TestAPIContainer['putTestData'] = async testData => {
+      await api.client.put('testData', testData)
+    }
+
+    return {
+      ...api,
+      putTestData,
+    }
   }
 }
 
@@ -35,4 +42,4 @@ function createTestAPI(): TestAPIContainer {
 //
 //========================================================================
 
-export { TestAPIContainer, createTestAPI }
+export { TestAPIContainer }

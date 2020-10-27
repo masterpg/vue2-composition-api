@@ -1,10 +1,8 @@
-import { APIKey, injectAPI } from '@/logic/api'
-import { Config, ConfigKey, injectConfig, provideConfig } from '@/config'
-import { InternalLogic, InternalLogicKey, injectInternalLogic } from '@/logic/modules/internal'
-import { LogicContainer, LogicKey, injectLogic, provideLogic } from '@/logic'
-import { StoreContainer, StoreKey, injectStore } from '@/logic/store'
-import { TestAPIContainer, createTestAPI } from './logic/api'
-import { provide } from '@vue/composition-api'
+import { InternalLogic } from '@/logic/modules/internal'
+import { StoreContainer } from '@/logic/store'
+import { TestAPIContainer } from './logic/api'
+import { TestLogicContainer } from './logic'
+import { provideLogic } from '@/logic'
 import { shallowMount } from '@vue/test-utils'
 
 //========================================================================
@@ -14,14 +12,13 @@ import { shallowMount } from '@vue/test-utils'
 //========================================================================
 
 interface ProvidedDependency {
-  config: Config
   api: TestAPIContainer
   store: StoreContainer
   internal: InternalLogic
-  logic: LogicContainer
+  logic: TestLogicContainer
 }
 
-type SetupFunc = (provided: ProvidedDependency) => void | Partial<ProvidedDependency>
+type SetupFunc = (provided: ProvidedDependency) => void
 
 //========================================================================
 //
@@ -40,7 +37,7 @@ let provided: ProvidedDependency | null
  *   モック設定を行ってください。引数の依存オブジェクトではなくモックオブジェクトをアプリケーション
  *   に登録したい場合、戻り値としてモックオブジェクトを返すようにしてください。
  */
-function provideDependency(setup?: (provided: ProvidedDependency) => Partial<ProvidedDependency> | void): ProvidedDependency {
+function provideDependency(setup?: SetupFunc): ProvidedDependency {
   const wrapper = shallowMount<ProvidedDependency & Vue>({
     template: '<div></div>',
     setup() {
@@ -48,8 +45,8 @@ function provideDependency(setup?: (provided: ProvidedDependency) => Partial<Pro
     },
   })
 
-  const { config, api, store, internal, logic } = wrapper.vm
-  return { config, api, store, internal, logic }
+  const { api, store, internal, logic } = wrapper.vm
+  return { api, store, internal, logic }
 }
 
 /**
@@ -63,49 +60,26 @@ function provideDependency(setup?: (provided: ProvidedDependency) => Partial<Pro
  */
 function provideDependencyToVue(setup?: SetupFunc): ProvidedDependency {
   if (!provided) {
-    provideConfig()
-    provideLogic({
-      api: createTestAPI,
-    })
+    const {
+      dependency: { api, store, internal },
+      ...logic
+    } = TestLogicContainer.newInstance()
+    provideLogic(logic)
 
     provided = {
-      config: injectConfig(),
-      api: injectAPI() as TestAPIContainer,
-      store: injectStore(),
-      internal: injectInternalLogic(),
-      logic: injectLogic(),
+      api,
+      store,
+      internal,
+      logic,
     }
   }
 
   // setup関数が指定されていなかった場合、providedを返す
   if (!setup) return provided
 
-  // setup関数を実行して戻り値がなかった場合、providedをそのまま返す
-  // ※setup関数が実行されるとprovidedの中身の依存オブジェクトが更新される
-  const setupResult = setup(provided)
-  if (!setupResult) return provided
-
-  const { logic, internal, store, api, config } = setupResult
-  if (config) {
-    provided.config = config
-    provide(ConfigKey, provided.config)
-  }
-  if (api) {
-    provided.api = api
-    provide(APIKey, provided.api)
-  }
-  if (store) {
-    provided.store = store
-    provide(StoreKey, provided.store)
-  }
-  if (internal) {
-    provided.internal = internal
-    provide(InternalLogicKey, provided.internal)
-  }
-  if (logic) {
-    provided.logic = logic
-    provide(LogicKey, provided.logic)
-  }
+  // setup関数を実行
+  // ※setup関数を実行するとprovidedの依存オブジェクトがモック化される
+  setup(provided)
 
   return provided
 }
@@ -121,3 +95,4 @@ function clearProvidedDependency(): void {
 //========================================================================
 
 export { provideDependency, provideDependencyToVue, clearProvidedDependency, ProvidedDependency }
+export * from './logic'

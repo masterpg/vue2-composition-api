@@ -69,7 +69,6 @@ import { injectLogic, provideLogic } from '@/logic'
 import { injectServiceWorker, provideServiceWorker } from '@/service-worker'
 import { Notify } from 'quasar'
 import { Platform } from 'quasar'
-import { provideConfig } from '@/config'
 import router from '@/router'
 import { useI18n } from '@/i18n'
 
@@ -85,7 +84,6 @@ export default defineComponent({
     //
     //----------------------------------------------------------------------
 
-    provideConfig()
     provideLogic()
     provideServiceWorker()
 
@@ -95,7 +93,6 @@ export default defineComponent({
 
     const dialogsRef = ref<Dialogs>()
     provideDialogs(dialogsRef)
-    const dialogs = injectDialogs()
 
     const state = reactive({
       leftDrawerOpen: Platform.is.desktop,

@@ -1,6 +1,5 @@
-import { APIClient, createAPIClient, injectAPIClient, provideAPIClient } from '@/logic/api/client'
-import { CartItem, OmitEntityTimestamp, Product, TimestampEntity } from '@/logic'
-import { InjectionKey, inject, provide } from '@vue/composition-api'
+import { CartItem, Entity, OmitEntityTimestamp, Product, TimestampEntity } from '@/logic'
+import { APIClient } from '@/logic/api/client'
 import dayjs from 'dayjs'
 
 //========================================================================
@@ -8,6 +7,14 @@ import dayjs from 'dayjs'
 //  Interfaces
 //
 //========================================================================
+
+type RawEntity<T = {}> = Entity &
+  OmitEntityTimestamp<T> & {
+    createdAt: string
+    updatedAt: string
+  }
+
+type ToEntity<T> = T extends undefined ? undefined : T extends null ? undefined : T extends Array<infer R> ? Array<ToEntity<R>> : TimestampEntity<T>
 
 interface APIContainer {
   getProduct(id: string): Promise<Product | undefined>
@@ -27,14 +34,6 @@ interface APIContainer {
   checkoutCart(): Promise<boolean>
 }
 
-interface APIContainerImpl extends APIContainer {
-  client: APIClient
-
-  toTimestampEntity<T extends RawTimestampEntity>(entity: T): (OmitEntityTimestamp<T> & TimestampEntity) | undefined
-
-  toTimestampEntities<T extends RawTimestampEntity>(entities: T[]): (OmitEntityTimestamp<T> & TimestampEntity)[]
-}
-
 interface CartItemAddInput {
   productId: string
   title: string
@@ -51,20 +50,11 @@ interface CartItemEditResponse extends CartItem {
   product: Pick<Product, 'id' | 'stock'>
 }
 
-interface RawEntity {
-  id: string
-}
+interface RawProduct extends RawEntity<Product> {}
 
-interface RawTimestampEntity extends RawEntity {
-  createdAt: string
-  updatedAt: string
-}
+interface RawCartItem extends RawEntity<CartItem> {}
 
-interface RawProduct extends OmitEntityTimestamp<Product>, RawTimestampEntity {}
-
-interface RawCartItem extends OmitEntityTimestamp<CartItem>, RawTimestampEntity {}
-
-interface RawCartItemEditResponse extends OmitEntityTimestamp<CartItemEditResponse>, RawTimestampEntity {}
+interface RawCartItemEditResponse extends RawEntity<CartItemEditResponse> {}
 
 //========================================================================
 //
@@ -72,142 +62,151 @@ interface RawCartItemEditResponse extends OmitEntityTimestamp<CartItemEditRespon
 //
 //========================================================================
 
-const APIKey: InjectionKey<APIContainer> = Symbol('APIContainer')
-
-function createAPI(): APIContainer {
-  //----------------------------------------------------------------------
-  //
-  //  Variables
-  //
-  //----------------------------------------------------------------------
-
-  const client = injectAPIClient()
-
-  //----------------------------------------------------------------------
-  //
-  //  Methods
-  //
-  //----------------------------------------------------------------------
-
-  const getProduct: APIContainer['getProduct'] = async id => {
-    const response = await client.get<RawProduct[]>('products', {
-      params: { ids: [id] },
-    })
-    if (response.data.length === 0) return
-    return toTimestampEntities(response.data)[0]
+namespace APIContainer {
+  export function newInstance(): APIContainer {
+    return newRawInstance()
   }
 
-  const getProducts: APIContainer['getProducts'] = async ids => {
-    const response = await client.get<RawProduct[]>('products', {
-      params: { ids },
-    })
-    return toTimestampEntities(response.data)
-  }
+  export function newRawInstance() {
+    //----------------------------------------------------------------------
+    //
+    //  Variables
+    //
+    //----------------------------------------------------------------------
 
-  const getCartItem: APIContainer['getCartItem'] = async id => {
-    const response = await client.get<RawCartItem[]>('cartItems', {
-      isAuth: true,
-      params: { ids: [id] },
-    })
-    if (response.data.length === 0) return
-    return toTimestampEntities(response.data)[0]
-  }
+    const client = APIClient.newInstance()
 
-  const getCartItems: APIContainer['getCartItems'] = async ids => {
-    const response = await client.get<RawCartItem[]>('cartItems', {
-      isAuth: true,
-      params: { ids },
-    })
-    return toTimestampEntities(response.data)
-  }
+    //----------------------------------------------------------------------
+    //
+    //  Methods
+    //
+    //----------------------------------------------------------------------
 
-  const addCartItems: APIContainer['addCartItems'] = async items => {
-    const response = await client.post<RawCartItemEditResponse[]>('cartItems', items, { isAuth: true })
-    return toTimestampEntities(response.data)
-  }
+    const getProduct: APIContainer['getProduct'] = async id => {
+      const response = await client.get<RawProduct[]>('products', {
+        params: { ids: [id] },
+      })
+      if (response.data.length === 0) return
+      return toEntity(response.data)[0]
+    }
 
-  const updateCartItems: APIContainer['updateCartItems'] = async items => {
-    const response = await client.put<RawCartItemEditResponse[]>('cartItems', items, { isAuth: true })
-    return toTimestampEntities(response.data)
-  }
+    const getProducts: APIContainer['getProducts'] = async ids => {
+      const response = await client.get<RawProduct[]>('products', {
+        params: { ids },
+      })
+      return toEntity(response.data)
+    }
 
-  const removeCartItems: APIContainer['removeCartItems'] = async cartItemIds => {
-    const response = await client.delete<RawCartItemEditResponse[]>('cartItems', {
-      isAuth: true,
-      params: { ids: cartItemIds },
-    })
-    return toTimestampEntities(response.data)
-  }
+    const getCartItem: APIContainer['getCartItem'] = async id => {
+      const response = await client.get<RawCartItem[]>('cartItems', {
+        isAuth: true,
+        params: { ids: [id] },
+      })
+      if (response.data.length === 0) return
+      return toEntity(response.data)[0]
+    }
 
-  const checkoutCart: APIContainer['checkoutCart'] = async () => {
-    const response = await client.put<boolean>('cartItems/checkout', undefined, { isAuth: true })
-    return response.data
-  }
+    const getCartItems: APIContainer['getCartItems'] = async ids => {
+      const response = await client.get<RawCartItem[]>('cartItems', {
+        isAuth: true,
+        params: { ids },
+      })
+      return toEntity(response.data)
+    }
 
-  //----------------------------------------------------------------------
-  //
-  //  Internal methods
-  //
-  //----------------------------------------------------------------------
+    const addCartItems: APIContainer['addCartItems'] = async items => {
+      const response = await client.post<RawCartItemEditResponse[]>('cartItems', items, { isAuth: true })
+      return toEntity(response.data)
+    }
 
-  const toTimestampEntity: APIContainerImpl['toTimestampEntity'] = entity => {
-    if (!entity) return
+    const updateCartItems: APIContainer['updateCartItems'] = async items => {
+      const response = await client.put<RawCartItemEditResponse[]>('cartItems', items, { isAuth: true })
+      return toEntity(response.data)
+    }
 
-    const { createdAt, updatedAt, ...otherEntity } = entity
+    const removeCartItems: APIContainer['removeCartItems'] = async cartItemIds => {
+      const response = await client.delete<RawCartItemEditResponse[]>('cartItems', {
+        isAuth: true,
+        params: { ids: cartItemIds },
+      })
+      return toEntity(response.data)
+    }
+
+    const checkoutCart: APIContainer['checkoutCart'] = async () => {
+      const response = await client.put<boolean>('cartItems/checkout', undefined, { isAuth: true })
+      return response.data
+    }
+
+    //----------------------------------------------------------------------
+    //
+    //  Internal methods
+    //
+    //----------------------------------------------------------------------
+
+    function toEntity<T extends RawEntity | RawEntity[] | undefined | null>(entity_or_entities: T): ToEntity<T> {
+      if (!entity_or_entities) {
+        return undefined as any
+      }
+
+      function to<U extends RawEntity>(entity: U): TimestampEntity<U> {
+        const { createdAt, updatedAt, ...others } = entity
+        return {
+          ...others,
+          createdAt: dayjs(createdAt),
+          updatedAt: dayjs(updatedAt),
+        }
+      }
+
+      if (Array.isArray(entity_or_entities)) {
+        const entities = entity_or_entities as RawEntity[]
+        const result: TimestampEntity<RawEntity>[] = []
+        for (const entity of entities) {
+          result.push(to(entity))
+        }
+        return result as ToEntity<T>
+      } else {
+        const entity = entity_or_entities as RawEntity
+        return to(entity) as ToEntity<T>
+      }
+    }
+
+    //----------------------------------------------------------------------
+    //
+    //  Result
+    //
+    //----------------------------------------------------------------------
+
     return {
-      ...otherEntity,
-      createdAt: dayjs(createdAt),
-      updatedAt: dayjs(updatedAt),
+      getProduct,
+      getProducts,
+      getCartItem,
+      getCartItems,
+      addCartItems,
+      updateCartItems,
+      removeCartItems,
+      checkoutCart,
+      client,
     }
   }
-
-  const toTimestampEntities: APIContainerImpl['toTimestampEntities'] = entities => {
-    return entities.map(entity => toTimestampEntity(entity)!)
-  }
-
-  //----------------------------------------------------------------------
-  //
-  //  Result
-  //
-  //----------------------------------------------------------------------
-
-  return {
-    getProduct,
-    getProducts,
-    getCartItem,
-    getCartItems,
-    addCartItems,
-    updateCartItems,
-    removeCartItems,
-    checkoutCart,
-    client,
-    toTimestampEntity,
-    toTimestampEntities,
-  } as APIContainerImpl
 }
 
-function provideAPI(options?: { api?: APIContainer | typeof createAPI; client?: APIClient | typeof createAPIClient }): void {
-  provideAPIClient(options?.client)
+//========================================================================
+//
+//  Dependency Injection
+//
+//========================================================================
 
-  let instance: APIContainer
-  if (!options?.api) {
-    instance = createAPI()
-  } else {
-    instance = typeof options.api === 'function' ? options.api() : options.api
-  }
-  provide(APIKey, instance)
+let instance: APIContainer
+
+function provideAPI(api: APIContainer): void {
+  instance = api
 }
 
 function injectAPI(): APIContainer {
-  validateAPIProvided()
-  return inject(APIKey)!
-}
-
-function validateAPIProvided(): void {
-  const value = inject(APIKey)
-  if (!value) {
-    throw new Error(`${APIKey.description} is not provided`)
+  if (!instance) {
+    throw new Error(`'APIContainer' is not provided`)
   }
+  return instance
 }
 
 //========================================================================
@@ -218,17 +217,12 @@ function validateAPIProvided(): void {
 
 export {
   APIContainer,
-  APIContainerImpl,
-  APIKey,
   CartItemAddInput,
   CartItemEditResponse,
   CartItemUpdateInput,
   RawCartItem,
-  RawEntity,
+  RawCartItemEditResponse,
   RawProduct,
-  RawTimestampEntity,
-  createAPI,
   injectAPI,
   provideAPI,
-  validateAPIProvided,
 }

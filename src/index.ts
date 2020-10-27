@@ -6,6 +6,7 @@ import VueCompositionApi from '@vue/composition-api'
 import { createI18n } from '@/i18n'
 import { quasar } from '@/quasar'
 import router from '@/router'
+import { setupConfig } from '@/config'
 
 // Vueの設定
 Vue.config.productionTip = false
@@ -16,6 +17,7 @@ quasar.setup()
 quasar.setupExtras()
 
 async function init() {
+  setupConfig()
   const i18n = createI18n()
   await i18n.load()
 

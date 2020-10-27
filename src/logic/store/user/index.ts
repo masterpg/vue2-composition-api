@@ -21,51 +21,57 @@ interface UserStore {
 //
 //========================================================================
 
-function createEmptyState(): User {
-  return {
-    id: '',
-    email: '',
-    displayName: '',
-    createdAt: dayjs(0),
-    updatedAt: dayjs(0),
-  }
-}
-
-function createUserStore(): UserStore {
-  //----------------------------------------------------------------------
-  //
-  //  Variables
-  //
-  //----------------------------------------------------------------------
-
-  const state = reactive({
-    value: createEmptyState(),
-  })
-
-  //----------------------------------------------------------------------
-  //
-  //  Methods
-  //
-  //----------------------------------------------------------------------
-
-  const set: UserStore['set'] = user => {
-    return User.populate(user, state.value)
+namespace UserStore {
+  export function newInstance(): UserStore {
+    return newRawInstance()
   }
 
-  const clear: UserStore['clear'] = () => {
-    set(createEmptyState())
+  export function newRawInstance() {
+    //----------------------------------------------------------------------
+    //
+    //  Variables
+    //
+    //----------------------------------------------------------------------
+
+    const state = reactive({
+      value: createEmptyState(),
+    })
+
+    //----------------------------------------------------------------------
+    //
+    //  Methods
+    //
+    //----------------------------------------------------------------------
+
+    const set: UserStore['set'] = user => {
+      return User.populate(user, state.value)
+    }
+
+    const clear: UserStore['clear'] = () => {
+      set(createEmptyState())
+    }
+
+    //----------------------------------------------------------------------
+    //
+    //  Result
+    //
+    //----------------------------------------------------------------------
+
+    return {
+      value: state.value,
+      set,
+      clear,
+    }
   }
 
-  //----------------------------------------------------------------------
-  //
-  //  Result
-  //
-  //----------------------------------------------------------------------
-
-  return {
-    value: state.value,
-    set,
-    clear,
+  function createEmptyState(): User {
+    return {
+      id: '',
+      email: '',
+      displayName: '',
+      createdAt: dayjs(0),
+      updatedAt: dayjs(0),
+    }
   }
 }
 
@@ -75,4 +81,4 @@ function createUserStore(): UserStore {
 //
 //========================================================================
 
-export { UserStore, createUserStore }
+export { UserStore }

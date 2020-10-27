@@ -1,7 +1,7 @@
 import { DeepPartial, removeEndSlash } from 'web-base-lib'
-import { InjectionKey, inject, provide, reactive } from '@vue/composition-api'
 import URI from 'urijs'
 import merge from 'lodash/merge'
+import { reactive } from '@vue/composition-api'
 
 //========================================================================
 //
@@ -31,7 +31,7 @@ interface CreateConfigParams {
 //
 //========================================================================
 
-const ConfigKey: InjectionKey<Config> = Symbol('Config')
+let config: Config
 
 function getAPIConfig(apiConfig: Omit<APIConfig, 'baseURL'>): APIConfig {
   const baseURL = new URI()
@@ -82,20 +82,16 @@ function createConfig(params: CreateConfigParams = {}): Config {
   }
 }
 
-function provideConfig(params: CreateConfigParams = {}): void {
-  provide(ConfigKey, createConfig(params))
+function setupConfig(): Config {
+  config = createConfig()
+  return config
 }
 
-function injectConfig(): Config {
-  validateConfigProvided()
-  return inject(ConfigKey)!
-}
-
-function validateConfigProvided(): void {
-  const value = inject(ConfigKey)
-  if (!value) {
-    throw new Error(`${ConfigKey.description} is not provided`)
+function useConfig(): Config {
+  if (!config) {
+    throw new Error('Config is not set up.')
   }
+  return config
 }
 
 //========================================================================
@@ -104,4 +100,4 @@ function validateConfigProvided(): void {
 //
 //========================================================================
 
-export { Config, ConfigKey, APIConfig, provideConfig, injectConfig, validateConfigProvided }
+export { Config, APIConfig, setupConfig, useConfig }

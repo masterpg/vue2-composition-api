@@ -1,5 +1,4 @@
-import { InjectionKey, WritableComputedRef, computed, inject, provide, reactive } from '@vue/composition-api'
-import { injectStore } from '@/logic/store'
+import { WritableComputedRef, computed, reactive } from '@vue/composition-api'
 
 //========================================================================
 //
@@ -29,70 +28,77 @@ type InternalAuthLogic = InternalLogic['auth']
 //  InternalHelperLogic
 //--------------------------------------------------
 
-function createInternalHelperLogic(): InternalHelperLogic {
-  return {}
+namespace InternalHelperLogic {
+  export function newInstance(): InternalHelperLogic {
+    return {}
+  }
 }
 
 //--------------------------------------------------
 //  InternalAuthLogic
 //--------------------------------------------------
 
-function createInternalAuthLogic(): InternalAuthLogic {
-  const store = injectStore()
+namespace InternalAuthLogic {
+  export function newInstance(): InternalAuthLogic {
+    const state = reactive({
+      isSignedIn: false,
+    })
 
-  const state = reactive({
-    isSignedIn: false,
-  })
+    const isSignedIn = computed<boolean>({
+      get: () => state.isSignedIn,
+      set: value => (state.isSignedIn = value),
+    })
 
-  const isSignedIn = computed<boolean>({
-    get: () => state.isSignedIn,
-    set: value => (state.isSignedIn = value),
-  })
+    const validateSignedIn: InternalAuthLogic['validateSignedIn'] = () => {
+      if (!state.isSignedIn) {
+        throw new Error(`The application is not yet signed in.`)
+      }
+    }
 
-  const validateSignedIn: InternalAuthLogic['validateSignedIn'] = () => {
-    if (!state.isSignedIn) {
-      throw new Error(`The application is not yet signed in.`)
+    return {
+      isSignedIn,
+      validateSignedIn,
     }
   }
-
-  return {
-    isSignedIn,
-    validateSignedIn,
-  }
 }
 
 //--------------------------------------------------
-//  Others
+//  InternalLogic
 //--------------------------------------------------
 
-const InternalLogicKey: InjectionKey<InternalLogic> = Symbol('InternalLogic')
+namespace InternalLogic {
+  export function newInstance(): InternalLogic {
+    return newRawInstance()
+  }
 
-function createInternalLogic(): InternalLogic {
-  return {
-    helper: createInternalHelperLogic(),
-    auth: createInternalAuthLogic(),
+  export function newRawInstance(options?: { helper?: InternalHelperLogic; auth?: InternalAuthLogic }) {
+    const helper = options?.helper ?? InternalHelperLogic.newInstance()
+    const auth = options?.auth ?? InternalAuthLogic.newInstance()
+
+    return {
+      helper,
+      auth,
+    }
   }
 }
 
-function provideInternalLogic(internal?: InternalLogic | typeof createInternalLogic): void {
-  let instance: InternalLogic
-  if (!internal) {
-    instance = createInternalLogic()
-  } else {
-    instance = typeof internal === 'function' ? internal() : internal
-  }
-  provide(InternalLogicKey, instance)
+//========================================================================
+//
+//  Dependency Injection
+//
+//========================================================================
+
+let instance: InternalLogic
+
+function provideInternalLogic(internal: InternalLogic): void {
+  instance = internal
 }
 
 function injectInternalLogic(): InternalLogic {
-  validateInternalLogicProvided()
-  return inject(InternalLogicKey)!
-}
-
-function validateInternalLogicProvided(): void {
-  if (!inject(InternalLogicKey)) {
-    throw new Error(`${InternalLogicKey.description} is not provided`)
+  if (!instance) {
+    throw new Error(`'InternalLogic' is not provided`)
   }
+  return instance
 }
 
 //========================================================================
@@ -101,15 +107,4 @@ function validateInternalLogicProvided(): void {
 //
 //========================================================================
 
-export {
-  InternalAuthLogic,
-  InternalHelperLogic,
-  InternalLogic,
-  InternalLogicKey,
-  createInternalAuthLogic,
-  createInternalHelperLogic,
-  createInternalLogic,
-  injectInternalLogic,
-  provideInternalLogic,
-  validateInternalLogicProvided,
-}
+export { InternalAuthLogic, InternalHelperLogic, InternalLogic, injectInternalLogic, provideInternalLogic }
