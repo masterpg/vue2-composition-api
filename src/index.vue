@@ -63,10 +63,10 @@
 </template>
 
 <script lang="ts">
-import { Dialogs, injectDialogs, provideDialogs } from '@/dialogs'
 import { defineComponent, reactive, ref } from '@vue/composition-api'
 import { injectLogic, provideLogic } from '@/logic'
 import { injectServiceWorker, provideServiceWorker } from '@/service-worker'
+import { Dialogs } from '@/dialogs'
 import { Notify } from 'quasar'
 import { Platform } from 'quasar'
 import router from '@/router'
@@ -92,7 +92,7 @@ export default defineComponent({
     const { t } = useI18n()
 
     const dialogsRef = ref<Dialogs>()
-    provideDialogs(dialogsRef)
+    Dialogs.provide(dialogsRef)
 
     const state = reactive({
       leftDrawerOpen: Platform.is.desktop,

@@ -1,3 +1,4 @@
+import { Dialogs } from '@/dialogs'
 import { InternalLogic } from '@/logic/modules/internal'
 import { StoreContainer } from '@/logic/store'
 import { TestAPIContainer } from './logic/api'
@@ -65,6 +66,7 @@ function provideDependencyToVue(setup?: SetupFunc): ProvidedDependency {
       ...logic
     } = TestLogicContainer.newInstance()
     provideLogic(logic)
+    Dialogs.provide(td.object())
 
     provided = {
       api,
