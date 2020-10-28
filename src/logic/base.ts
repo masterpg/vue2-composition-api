@@ -1,6 +1,6 @@
+import { DeepPartial, DeepReadonly } from 'web-base-lib'
 import dayjs, { Dayjs } from 'dayjs'
 import { APIContainer } from '@/logic/api'
-import { DeepPartial } from 'web-base-lib'
 import { InternalLogic } from '@/logic/modules/internal'
 import { StoreContainer } from '@/logic/store'
 
@@ -79,11 +79,14 @@ namespace Product {
     return to as Product
   }
 
-  export function clone<T extends Product | Product[]>(source: T): T {
+  export function clone<T extends Product | Product[] | undefined | null>(source?: DeepReadonly<T>): T {
+    if (!source) return source as T
     if (Array.isArray(source)) {
-      return (source as Product[]).map(item => clone(item)) as T
+      const list = source as DeepReadonly<Product>[]
+      return list.map(item => clone(item)) as T
     } else {
-      return populate(source as Product, {}) as T
+      const item = source as DeepReadonly<Product>
+      return populate(item, {}) as T
     }
   }
 }
@@ -101,11 +104,14 @@ namespace CartItem {
     return to as CartItem
   }
 
-  export function clone<T extends CartItem | CartItem[]>(source: T): T {
+  export function clone<T extends CartItem | CartItem[] | undefined | null>(source?: DeepReadonly<T>): T {
+    if (!source) return source as T
     if (Array.isArray(source)) {
-      return (source as CartItem[]).map(item => clone(item)) as T
+      const list = source as DeepReadonly<CartItem>[]
+      return list.map(item => clone(item)) as T
     } else {
-      return populate(source as CartItem, {}) as T
+      const item = source as DeepReadonly<CartItem>
+      return populate(item, {}) as T
     }
   }
 }

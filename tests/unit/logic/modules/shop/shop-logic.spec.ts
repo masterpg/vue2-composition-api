@@ -1,10 +1,10 @@
 import { APIContainer, CartItemEditResponse } from '@/logic/api'
 import { CartItem, Product } from '@/logic'
+import { provideDependency, toBeCopyCartItem, toBeCopyProduct } from '../../../../helpers'
 import { InternalAuthLogic } from '@/logic/modules/internal'
 import { ShopLogic } from '@/logic/modules/shop'
 import dayjs from 'dayjs'
 import { generateId } from '@/logic/store'
-import { provideDependency } from '../../../../helpers'
 
 //========================================================================
 //
@@ -60,7 +60,8 @@ describe('ShopLogic', () => {
     const actual = await logic.shop.fetchProducts()
 
     expect(actual).toEqual(PRODUCTS)
-    expect(store.product.all).toEqual(PRODUCTS)
+    expect(store.product.all.value).toEqual(PRODUCTS)
+    toBeCopyProduct(store, actual)
   })
 
   describe('fetchCartItems', () => {
@@ -76,7 +77,8 @@ describe('ShopLogic', () => {
       const actual = await logic.shop.fetchCartItems()
 
       expect(actual).toEqual(CART_ITEMS)
-      expect(store.cart.all).toEqual(CART_ITEMS)
+      expect(store.cart.all.value).toEqual(CART_ITEMS)
+      toBeCopyCartItem(store, actual)
 
       // validateSignedInの呼び出しを検証
       const exp = td.explain(internal.auth.validateSignedIn)
@@ -101,7 +103,7 @@ describe('ShopLogic', () => {
 
       expect(actual).toBeInstanceOf(Error)
       // ストアに変化がないことを検証
-      expect(store.cart.all.length).toBe(0)
+      expect(store.cart.all.value.length).toBe(0)
     })
   })
 
@@ -240,8 +242,8 @@ describe('ShopLogic', () => {
 
       expect(actual).toBeInstanceOf(Error)
       // ストアに変化がないことを検証
-      expect(store.product.all).toEqual(products)
-      expect(store.cart.all.length).toBe(0)
+      expect(store.product.all.value).toEqual(products)
+      expect(store.cart.all.value.length).toBe(0)
     })
 
     it('APIでエラーが発生した場合', async () => {
@@ -266,8 +268,8 @@ describe('ShopLogic', () => {
 
       expect(actual).toBeInstanceOf(Error)
       // ストアに変化がないことを検証
-      expect(store.product.all).toEqual(PRODUCTS)
-      expect(store.cart.all.length).toBe(0)
+      expect(store.product.all.value).toEqual(PRODUCTS)
+      expect(store.cart.all.value.length).toBe(0)
     })
   })
 
@@ -402,8 +404,8 @@ describe('ShopLogic', () => {
 
       expect(actual).toBeInstanceOf(Error)
       // ストアに変化がないことを検証
-      expect(store.product.all).toEqual(PRODUCTS)
-      expect(store.cart.all).toEqual(cartItems)
+      expect(store.product.all.value).toEqual(PRODUCTS)
+      expect(store.cart.all.value).toEqual(cartItems)
     })
   })
 
@@ -423,8 +425,8 @@ describe('ShopLogic', () => {
       await logic.shop.checkout()
 
       td.verify(api.checkoutCart())
-      expect(logic.shop.cartItems.length).toBe(0)
-      expect(logic.shop.products).toEqual(PRODUCTS)
+      expect(logic.shop.cartItems.value.length).toBe(0)
+      expect(logic.shop.products.value).toEqual(PRODUCTS)
     })
 
     it('APIでエラーが発生した場合', async () => {
@@ -448,8 +450,8 @@ describe('ShopLogic', () => {
 
       expect(actual).toBeInstanceOf(Error)
       // ストアに変化がないことを検証
-      expect(store.product.all).toEqual(PRODUCTS)
-      expect(store.cart.all).toEqual(CART_ITEMS)
+      expect(store.product.all.value).toEqual(PRODUCTS)
+      expect(store.cart.all.value).toEqual(CART_ITEMS)
     })
   })
 })

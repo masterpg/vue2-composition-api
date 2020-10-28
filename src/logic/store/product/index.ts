@@ -1,7 +1,7 @@
+import { ComputedRef, computed, reactive } from '@vue/composition-api'
 import { DeepReadonly } from 'web-base-lib'
 import { Product } from '@/logic/base'
 import { StatePartial } from '@/logic/store/base'
-import { reactive } from '@vue/composition-api'
 
 //========================================================================
 //
@@ -10,19 +10,19 @@ import { reactive } from '@vue/composition-api'
 //========================================================================
 
 interface ProductStore {
-  readonly all: DeepReadonly<Product>[]
+  readonly all: ComputedRef<DeepReadonly<Product>[]>
 
-  getById(productId: string): DeepReadonly<Product> | undefined
+  getById(productId: string): Product | undefined
 
-  sgetById(productId: string): DeepReadonly<Product>
+  sgetById(productId: string): Product
 
   exists(productId: string): boolean
 
   setAll(products: Product[]): void
 
-  add(product: Product): DeepReadonly<Product>
+  add(product: Product): Product
 
-  set(product: StatePartial<Product>): DeepReadonly<Product> | undefined
+  set(product: StatePartial<Product>): Product | undefined
 
   decrementStock(productId: string): void
 
@@ -53,6 +53,14 @@ namespace ProductStore {
 
     //----------------------------------------------------------------------
     //
+    //  Properties
+    //
+    //----------------------------------------------------------------------
+
+    const all = computed(() => [...state.all])
+
+    //----------------------------------------------------------------------
+    //
     //  Methods
     //
     //----------------------------------------------------------------------
@@ -62,7 +70,7 @@ namespace ProductStore {
     }
 
     const getById: ProductStore['getById'] = productId => {
-      return getStateProductById(productId)
+      return Product.clone(getStateProductById(productId))
     }
 
     const sgetById: ProductStore['sgetById'] = productId => {
@@ -87,7 +95,7 @@ namespace ProductStore {
 
       const stateItem = Product.clone(product)
       state.all.push(stateItem)
-      return stateItem
+      return Product.clone(stateItem)
     }
 
     const set: ProductStore['set'] = product => {
@@ -96,7 +104,7 @@ namespace ProductStore {
         return
       }
 
-      return Product.populate(product, stateItem)
+      return Product.clone(Product.populate(product, stateItem))
     }
 
     const decrementStock: ProductStore['decrementStock'] = productId => {
@@ -132,7 +140,7 @@ namespace ProductStore {
     //----------------------------------------------------------------------
 
     return {
-      all: state.all,
+      all,
       exists,
       getById,
       sgetById,
@@ -141,6 +149,7 @@ namespace ProductStore {
       add,
       decrementStock,
       incrementStock,
+      state,
     }
   }
 }

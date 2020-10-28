@@ -1,8 +1,6 @@
+import { TestAPIContainer, TestLogicContainer, TestStoreContainer } from './logic'
 import { Dialogs } from '@/dialogs'
 import { InternalLogic } from '@/logic/modules/internal'
-import { StoreContainer } from '@/logic/store'
-import { TestAPIContainer } from './logic/api'
-import { TestLogicContainer } from './logic'
 import { provideLogic } from '@/logic'
 import { shallowMount } from '@vue/test-utils'
 
@@ -14,7 +12,7 @@ import { shallowMount } from '@vue/test-utils'
 
 interface ProvidedDependency {
   api: TestAPIContainer
-  store: StoreContainer
+  store: TestStoreContainer
   internal: InternalLogic
   logic: TestLogicContainer
 }
