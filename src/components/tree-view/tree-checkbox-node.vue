@@ -77,7 +77,7 @@
         </div>
         <!-- アイテム -->
         <div class="item">
-          <q-checkbox v-model="checked" />
+          <q-checkbox v-show="useCheckbox" v-model="checked" />
           <span>{{ label }}</span>
         </div>
       </div>
@@ -100,12 +100,12 @@ import { TreeNodeData } from '@/components/tree-view/base'
 //
 //========================================================================
 
-interface TreeCheckboxNode extends TreeNode<TreeCheckboxNode> {
-  checked: boolean
+interface TreeCheckboxNode extends TreeNode<TreeCheckboxNodeData> {
+  checked: boolean | null
 }
 
 interface TreeCheckboxNodeData extends TreeNodeData {
-  checked?: boolean
+  checked?: boolean | null
 }
 
 //========================================================================
@@ -124,28 +124,31 @@ namespace TreeCheckboxNode {
 
     setup(props: {}, context) {
       const base = TreeNode.setup(props, context)
-      const nodeData = computed<TreeCheckboxNodeData>(() => base.state.nodeData)
+      const nodeData = computed<TreeCheckboxNodeData>(() => base.nodeData.value)
 
-      base.extraEventNames.push('checked-change')
+      base.extraEventNames.value.push('checked-change')
 
       base.init_sub.value = (nodeData: TreeCheckboxNodeData) => {
-        set(nodeData, 'checked', Boolean(nodeData.checked))
+        set(nodeData, 'checked', typeof nodeData.checked === 'boolean' ? nodeData.checked : null)
       }
 
-      const checked = computed({
-        get: () => nodeData.value.checked,
+      const checked = computed<boolean | null>({
+        get: () => (typeof nodeData.value.checked === 'boolean' ? nodeData.value.checked : null),
         set: value => {
           const changed = nodeData.value.checked !== value
           nodeData.value.checked = value
-          if (changed) {
+          if (useCheckbox.value && changed) {
             base.dispatchExtraEvent('checked-change')
           }
         },
       })
 
+      const useCheckbox = computed(() => typeof nodeData.value.checked === 'boolean')
+
       return {
         ...base,
         checked,
+        useCheckbox,
       }
     },
   })
