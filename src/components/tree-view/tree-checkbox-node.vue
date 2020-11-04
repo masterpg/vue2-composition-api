@@ -1,8 +1,6 @@
 <style lang="sass" scoped>
 @import 'src/styles/app.variables'
 
-.TreeCheckboxNode
-
 .node-container
   padding-top: var(--tree-distance, 6px)
   &.eldest
@@ -16,8 +14,9 @@
   height: 1.5em
   margin-right: 6px
   .toggle-icon
-    transition: transform .5s
     cursor: pointer
+    &.anime
+      transition: transform .5s
 
 .item-container
   height: var(--tree-line-height, 26px)
@@ -55,7 +54,14 @@
       <div v-show="lazyLoadStatus !== 'loading'" class="icon-container">
         <!-- トグルアイコン有り -->
         <template v-if="hasChildren">
-          <q-icon name="arrow_right" size="26px" color="grey-6" class="toggle-icon" :class="[opened ? 'rotate-90' : '']" @click="toggleIconOnClick" />
+          <q-icon
+            name="arrow_right"
+            size="26px"
+            color="grey-6"
+            class="toggle-icon"
+            :class="[opened ? 'rotate-90' : '', hasToggleAnime ? 'anime' : '']"
+            @click="toggleIconOnClick"
+          />
         </template>
         <!-- トグルアイコン無し -->
         <template v-else>

@@ -1,8 +1,6 @@
 <style lang="sass" scoped>
 @import 'src/styles/app.variables'
 
-.TreeNode
-
 .node-container
   padding-top: var(--tree-distance, 6px)
   &.eldest
@@ -16,8 +14,9 @@
   height: 1.5em
   margin-right: 6px
   .toggle-icon
-    transition: transform .5s
     cursor: pointer
+    &.anime
+      transition: transform .5s
 
 .item-container
   height: var(--tree-line-height, 26px)
@@ -55,7 +54,14 @@
       <div v-show="lazyLoadStatus !== 'loading'" class="icon-container">
         <!-- トグルアイコン有り -->
         <template v-if="hasChildren">
-          <q-icon name="arrow_right" size="26px" color="grey-6" class="toggle-icon" :class="[opened ? 'rotate-90' : '']" @click="toggleIconOnClick" />
+          <q-icon
+            name="arrow_right"
+            size="26px"
+            color="grey-6"
+            class="toggle-icon"
+            :class="[opened ? 'rotate-90' : '', hasToggleAnime ? 'anime' : '']"
+            @click="toggleIconOnClick"
+          />
         </template>
         <!-- トグルアイコン無し -->
         <template v-else>
@@ -220,19 +226,19 @@ interface TreeNode<DATA extends TreeNodeData = TreeNodeData> extends Vue {
   removeAllChildren(): void
   /**
    * 子ノードの開閉をトグルします。
-   * @param animated
+   * @param animate
    */
-  toggle(animated?: boolean): void
+  toggle(animate?: boolean): void
   /**
    * 子ノードを展開します。
-   * @param animated
+   * @param animate
    */
-  open(animated?: boolean): void
+  open(animate?: boolean): void
   /**
    * 子ノードを閉じます。
-   * @param animated
+   * @param animate
    */
-  close(animated?: boolean): void
+  close(animate?: boolean): void
 }
 
 interface TreeNodeImpl<DATA extends TreeNodeData = TreeNodeData> extends TreeNode<DATA> {
@@ -332,6 +338,8 @@ namespace TreeNode {
         return children.value.length > 0
       }
     })
+
+    const hasToggleAnime = computed(() => Boolean(state.toggleAnime))
 
     //----------------------------------------------------------------------
     //
@@ -593,18 +601,18 @@ namespace TreeNode {
       }
     }
 
-    const toggle: TreeNodeImpl['toggle'] = (animated = true) => {
-      toggleImpl(!opened.value, animated)
+    const toggle: TreeNodeImpl['toggle'] = (animate = true) => {
+      toggleImpl(!opened.value, animate)
     }
 
-    const open: TreeNodeImpl['open'] = (animated = true) => {
+    const open: TreeNodeImpl['open'] = (animate = true) => {
       if (state.nodeData.opened) return
-      toggleImpl(true, animated)
+      toggleImpl(true, animate)
     }
 
-    const close: TreeNodeImpl['close'] = (animated = true) => {
+    const close: TreeNodeImpl['close'] = (animate = true) => {
       if (!state.nodeData.opened) return
-      toggleImpl(false, animated)
+      toggleImpl(false, animate)
     }
 
     //----------------------------------------------------------------------
@@ -1059,11 +1067,11 @@ namespace TreeNode {
       }
     }
 
-    function toggleImpl(newOpened: boolean, animated: boolean): void {
+    function toggleImpl(newOpened: boolean, animate: boolean): void {
       // 遅延ロードが指定され、かつまだロードされていない場合
       if (lazy.value && lazyLoadStatus.value === 'none') {
         startLazyLoad(() => {
-          toggleImpl(newOpened, animated)
+          toggleImpl(newOpened, animate)
         })
       }
       // 上記以外の場合
@@ -1071,7 +1079,7 @@ namespace TreeNode {
         const changed = opened.value !== newOpened
         state.nodeData.opened = newOpened
 
-        if (animated) {
+        if (animate) {
           refreshChildContainerHeightWithAnimation()
         } else {
           refreshChildContainerHeight()
@@ -1201,6 +1209,7 @@ namespace TreeNode {
 
       nodeContainer,
       lazyLoadIcon,
+      hasToggleAnime,
     }
   }
 }
