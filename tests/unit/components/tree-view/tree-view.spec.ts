@@ -75,6 +75,7 @@ function verifyTreeView(treeView: TreeViewImpl) {
     // ツリービューからノードを取得できることを検証
     expect(treeView.getNode(node.value)!.value).toBe(node.value)
     // ノードの親子(子孫)関係の検証
+    expect(node.children.length).toBe(node.nodeData.children.length)
     verifyParentChildRelation(treeView, node)
     // ノードが選択状態の場合
     if (node.selected) {
@@ -98,6 +99,7 @@ function verifyParentChildRelation(treeView: TreeViewImpl, node: TreeNodeImpl) {
     expect(treeView.getNode(child.value)!.value).toBe(child.value)
     // ノードの親子関係を検証
     expect(child.parent).toBe(node)
+    expect(child.parent!.nodeData.children.find((childData: TreeNodeData) => childData.value === child.value)).toEqual(child.nodeData)
     // ノードのコンテナに子ノードが存在することを検証
     const containerChildren = Array.from(node.childContainer.children)
     expect(containerChildren[i]).toBe(child.el)

@@ -243,6 +243,7 @@ interface TreeNodeImpl<DATA extends TreeNodeData = TreeNodeData> extends TreeNod
   readonly el: HTMLElement
   readonly childContainer: HTMLElement
   readonly treeView: TreeViewImpl
+  readonly nodeData: Required<DATA>
   readonly extraEventNames: string[]
   init(nodeData: DATA): void
   sortChildren(): void
@@ -296,7 +297,7 @@ namespace TreeNode {
       toggleAnime: null,
       extraEventNames: [] as any[],
     }) as {
-      nodeData: TreeNodeData
+      nodeData: Required<TreeNodeData>
       treeView: TreeViewImpl | null
       isEldest: boolean
       parent: TreeNodeImpl | null
@@ -362,10 +363,10 @@ namespace TreeNode {
       },
     })
 
-    const opened = computed(() => state.nodeData.opened!)
+    const opened = computed(() => state.nodeData.opened)
 
     const selected = computed({
-      get: () => state.nodeData.selected!,
+      get: () => state.nodeData.selected,
       set: value => {
         setSelectedImpl(value, { silent: false })
         resetNodePositionInParentDebounce(self)
@@ -378,7 +379,7 @@ namespace TreeNode {
     }
 
     const unselectable = computed({
-      get: () => state.nodeData.unselectable!,
+      get: () => state.nodeData.unselectable,
       set: value => {
         state.nodeData.unselectable = value
         if (value) {
@@ -396,7 +397,7 @@ namespace TreeNode {
     const children = computed(() => state.children)
 
     const icon = computed({
-      get: () => state.nodeData.icon!,
+      get: () => state.nodeData.icon,
       set: value => {
         state.nodeData.icon = value
         resetNodePositionInParentDebounce(self)
@@ -404,7 +405,7 @@ namespace TreeNode {
     })
 
     const iconColor = computed({
-      get: () => state.nodeData.iconColor!,
+      get: () => state.nodeData.iconColor,
       set: value => {
         state.nodeData.iconColor = value
         resetNodePositionInParentDebounce(self)
@@ -420,7 +421,7 @@ namespace TreeNode {
     })
 
     const lazyLoadStatus = computed({
-      get: () => state.nodeData.lazyLoadStatus!,
+      get: () => state.nodeData.lazyLoadStatus,
       set: value => {
         state.nodeData.lazyLoadStatus = value
         resetNodePositionInParentDebounce(self)
@@ -623,15 +624,16 @@ namespace TreeNode {
       set(nodeData, 'opened', Boolean(nodeData.opened))
       set(nodeData, 'unselectable', Boolean(nodeData.unselectable))
       set(nodeData, 'selected', Boolean(nodeData.selected))
+      set(nodeData, 'children', nodeData.children || [])
       set(nodeData, 'lazy', Boolean(nodeData.lazy))
       set(nodeData, 'lazyLoadStatus', nodeData.lazyLoadStatus || 'none')
       set(nodeData, 'sortFunc', nodeData.sortFunc || null)
-      state.nodeData = nodeData
+      state.nodeData = nodeData as Required<TreeNodeData>
 
       // サブクラスで必要な処理を実行
       init_sub.value(nodeData)
 
-      setSelectedImpl(state.nodeData.selected!, { initializing: true })
+      setSelectedImpl(state.nodeData.selected, { initializing: true })
     }
 
     /**
@@ -662,6 +664,7 @@ namespace TreeNode {
         isDispatchEvent && util.dispatchBeforeNodeRemove(self, childNode)
         childNode.parent = null
         children.value.splice(index, 1)
+        state.nodeData.children.splice(index, 1)
         removeChildFromContainer(childNode)
         refreshChildContainerHeight()
         isDispatchEvent && util.dispatchNodeRemove(self, childNode)
@@ -928,6 +931,9 @@ namespace TreeNode {
       // ノードの親子関係を設定
       childNode.parent = self
       children.value.splice(insertIndex, 0, childNode)
+      if (!state.nodeData.children.find(data => data.value === childNode.value)) {
+        state.nodeData.children.splice(insertIndex, 0, childNode.nodeData)
+      }
 
       // 親ノードのコンテナの高さを設定
       if (parent.value) {
@@ -1000,6 +1006,9 @@ namespace TreeNode {
       // ノードの親子関係を設定
       childNode.parent = self
       children.value!.splice(insertIndex, 0, childNode)
+      if (!state.nodeData.children.find(data => data.value === childNode.value)) {
+        state.nodeData.children.splice(insertIndex, 0, childNode.nodeData)
+      }
 
       // 親ノードのコンテナの高さを設定
       if (parent.value) {
@@ -1161,6 +1170,7 @@ namespace TreeNode {
       el,
       childContainer,
       treeView,
+      nodeData: computed(() => state.nodeData),
       extraEventNames,
       init,
       sortChildren,
@@ -1177,7 +1187,6 @@ namespace TreeNode {
       //  extended
       //--------------------------------------------------
 
-      nodeData: computed(() => state.nodeData),
       hasChildren,
       init_sub,
       setNodeData_sub,

@@ -410,7 +410,7 @@ namespace TreeView {
       insertChildIntoContainer(node, insertIndex)
 
       // 子ノードの設定
-      const len = nodeData.children ? nodeData.children.length : 0
+      const len = nodeData.children?.length ?? 0
       for (let i = 0; i < len; i++) {
         node.addChild(nodeData.children![i], { insertIndex: i })
       }
