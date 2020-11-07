@@ -5,7 +5,7 @@
 
 .container
   min-width: 300px
-  body.screen--lg &, body.screen--xl & body.screen--md &
+  body.screen--lg &, body.screen--xl &, body.screen--md &
     max-width: 70vw
   body.screen--xs &, body.screen--sm &
     max-width: 90vw
