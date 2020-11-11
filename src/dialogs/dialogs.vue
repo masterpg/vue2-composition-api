@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="Dialogs">
     <MessageDialog ref="messageDialog" />
   </div>
 </template>
@@ -17,15 +17,13 @@ import { VueRouter } from 'vue-router/types/router'
 //
 //========================================================================
 
-interface Dialogs {
+interface Dialogs extends Dialogs.Props {
   getQuery(): { dialogName: DialogNames; dialogParams?: any } | undefined
   clearQuery(): void
   readonly message: { open: MessageDialog['open'] }
 }
 
 type DialogNames = 'message'
-
-interface Props {}
 
 //========================================================================
 //
@@ -34,6 +32,8 @@ interface Props {}
 //========================================================================
 
 namespace Dialogs {
+  export interface Props {}
+
   //--------------------------------------------------
   //  Component definition
   //--------------------------------------------------
@@ -45,7 +45,17 @@ namespace Dialogs {
       MessageDialog: MessageDialog.clazz,
     },
 
-    setup: (props: Props, ctx) => {
+    setup: (props: Readonly<Props>, ctx) => {
+      //----------------------------------------------------------------------
+      //
+      //  Lifecycle hooks
+      //
+      //----------------------------------------------------------------------
+
+      onMounted(() => {
+        openDialogByCurrentRoute()
+      })
+
       //----------------------------------------------------------------------
       //
       //  Variables
@@ -59,16 +69,6 @@ namespace Dialogs {
       const dialogs: { [name: string]: Ref<Dialog<any, any>> } = {
         message: messageDialog,
       }
-
-      //----------------------------------------------------------------------
-      //
-      //  Lifecycle hooks
-      //
-      //----------------------------------------------------------------------
-
-      onMounted(() => {
-        openDialogByCurrentRoute()
-      })
 
       //----------------------------------------------------------------------
       //
