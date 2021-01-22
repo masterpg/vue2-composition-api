@@ -16,7 +16,7 @@ interface Entity {
   id: string
 }
 
-type TimestampEntity<T = {}> = Entity &
+type TimestampEntity<T = unknown> = Entity &
   OmitEntityTimestamp<T> & {
     createdAt: Dayjs
     updatedAt: Dayjs

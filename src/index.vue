@@ -20,9 +20,7 @@
       <q-toolbar>
         <q-btn flat dense round aria-label="Menu" icon="menu" @click="state.leftDrawerOpen = !state.leftDrawerOpen" />
 
-        <q-toolbar-title>
-          Vue2 Composition API
-        </q-toolbar-title>
+        <q-toolbar-title> Vue2 Composition API </q-toolbar-title>
 
         <div class="app-mr-16">Quasar v{{ $q.version }}</div>
         <div v-show="state.isSignedIn" class="app-mr-16">{{ state.user.displayName }}</div>

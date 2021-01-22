@@ -18,7 +18,7 @@ import { VueRouter } from 'vue-router/types/router'
 //========================================================================
 
 interface Dialogs extends Dialogs.Props {
-  getQuery(): { dialogName: DialogNames; dialogParams?: any } | undefined
+  getQuery(): { dialogName: DialogNames; dialogParams?: Record<string, unknown> } | undefined
   clearQuery(): void
   readonly message: { open: MessageDialog['open'] }
 }
@@ -80,7 +80,7 @@ namespace Dialogs {
         const dialogName = router.currentRoute.query.dialogName as DialogNames | undefined
         if (!dialogName) return
 
-        let dialogParams: {} | undefined
+        let dialogParams: Record<string, unknown> | undefined
         const paramStr = router.currentRoute.query.dialogParams as string
         if (paramStr) {
           dialogParams = JSON.parse(decodeURIComponent(paramStr))

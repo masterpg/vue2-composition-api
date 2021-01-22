@@ -34,7 +34,7 @@ beforeEach(async () => {
   await i18n.load()
 })
 
-afterEach(function() {
+afterEach(() => {
   clearProvidedDependency()
   td.reset()
 })

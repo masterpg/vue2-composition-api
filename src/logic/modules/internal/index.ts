@@ -7,16 +7,16 @@ import { WritableComputedRef, computed, reactive } from '@vue/composition-api'
 //========================================================================
 
 interface InternalLogic {
-  helper: {}
-  auth: {
-    isSignedIn: WritableComputedRef<boolean>
-    validateSignedIn(): void
-  }
+  helper: InternalHelperLogic
+  auth: InternalAuthLogic
 }
 
-type InternalHelperLogic = InternalLogic['helper']
+interface InternalHelperLogic {}
 
-type InternalAuthLogic = InternalLogic['auth']
+interface InternalAuthLogic {
+  isSignedIn: WritableComputedRef<boolean>
+  validateSignedIn(): void
+}
 
 //========================================================================
 //

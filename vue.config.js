@@ -22,7 +22,7 @@ const pages = {
 module.exports = {
   pluginOptions: {
     quasar: {
-      importStrategy: 'manual',
+      importStrategy: 'combined',
       rtlSupport: false,
     },
   },

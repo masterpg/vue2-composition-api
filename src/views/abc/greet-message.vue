@@ -25,6 +25,7 @@
 
 <script lang="ts">
 import { computed, defineComponent, reactive } from '@vue/composition-api'
+import Vue from 'vue'
 import { injectLogic } from '@/logic'
 import { useI18n } from '@/i18n'
 
