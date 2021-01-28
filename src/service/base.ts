@@ -10,17 +10,18 @@ import { StoreContainer } from '@/service/store'
 //
 //========================================================================
 
-type OmitEntityTimestamp<T> = Omit<T, 'createdAt' | 'updatedAt'>
-
 interface Entity {
   id: string
 }
 
-type TimestampEntity<T = unknown> = Entity &
-  OmitEntityTimestamp<T> & {
-    createdAt: Dayjs
-    updatedAt: Dayjs
-  }
+interface EntityTimestamp {
+  createdAt: Dayjs
+  updatedAt: Dayjs
+}
+
+type OmitTimestamp<T> = Omit<T, 'createdAt' | 'updatedAt'>
+
+type TimestampEntity<T = unknown> = Entity & OmitTimestamp<T> & EntityTimestamp
 
 interface ServiceDependency {
   api: APIContainer
@@ -122,4 +123,4 @@ namespace CartItem {
 //
 //========================================================================
 
-export { CartItem, Entity, ServiceDependency, OmitEntityTimestamp, Product, TimestampEntity, User }
+export { CartItem, Entity, EntityTimestamp, ServiceDependency, OmitTimestamp, Product, TimestampEntity, User }

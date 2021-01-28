@@ -1,4 +1,4 @@
-import { CartItem, Entity, OmitEntityTimestamp, Product, TimestampEntity } from '@/service'
+import { CartItem, Entity, OmitTimestamp, Product, TimestampEntity } from '@/service'
 import { APIClient } from '@/service/api/client'
 import dayjs from 'dayjs'
 
@@ -9,12 +9,12 @@ import dayjs from 'dayjs'
 //========================================================================
 
 type RawEntity<T = unknown> = Entity &
-  OmitEntityTimestamp<T> & {
+  OmitTimestamp<T> & {
     createdAt: string
     updatedAt: string
   }
 
-type ToEntity<T> = T extends undefined ? undefined : T extends null ? undefined : T extends Array<infer R> ? Array<ToEntity<R>> : TimestampEntity<T>
+type ToEntity<T> = T extends undefined ? undefined : T extends null ? undefined : TimestampEntity<T>
 
 interface APIContainer {
   getProduct(id: string): Promise<Product | undefined>
@@ -87,14 +87,14 @@ namespace APIContainer {
         params: { ids: [id] },
       })
       if (response.data.length === 0) return
-      return toEntity(response.data)[0]
+      return toEntities(response.data)[0]
     }
 
     const getProducts: APIContainer['getProducts'] = async ids => {
       const response = await client.get<RawProduct[]>('products', {
         params: { ids },
       })
-      return toEntity(response.data)
+      return toEntities(response.data)
     }
 
     const getCartItem: APIContainer['getCartItem'] = async id => {
@@ -103,7 +103,7 @@ namespace APIContainer {
         params: { ids: [id] },
       })
       if (response.data.length === 0) return
-      return toEntity(response.data)[0]
+      return toEntities(response.data)[0]
     }
 
     const getCartItems: APIContainer['getCartItems'] = async ids => {
@@ -111,17 +111,17 @@ namespace APIContainer {
         isAuth: true,
         params: { ids },
       })
-      return toEntity(response.data)
+      return toEntities(response.data)
     }
 
     const addCartItems: APIContainer['addCartItems'] = async items => {
       const response = await client.post<RawCartItemEditResponse[]>('cartItems', items, { isAuth: true })
-      return toEntity(response.data)
+      return toEntities(response.data)
     }
 
     const updateCartItems: APIContainer['updateCartItems'] = async items => {
       const response = await client.put<RawCartItemEditResponse[]>('cartItems', items, { isAuth: true })
-      return toEntity(response.data)
+      return toEntities(response.data)
     }
 
     const removeCartItems: APIContainer['removeCartItems'] = async cartItemIds => {
@@ -129,7 +129,7 @@ namespace APIContainer {
         isAuth: true,
         params: { ids: cartItemIds },
       })
-      return toEntity(response.data)
+      return toEntities(response.data)
     }
 
     const checkoutCart: APIContainer['checkoutCart'] = async () => {
@@ -143,31 +143,19 @@ namespace APIContainer {
     //
     //----------------------------------------------------------------------
 
-    function toEntity<T extends RawEntity | RawEntity[] | undefined | null>(entity_or_entities: T): ToEntity<T> {
-      if (!entity_or_entities) {
-        return undefined as any
-      }
+    function toEntity<T extends RawEntity | undefined | null>(rawEntity: T): ToEntity<T> {
+      if (!rawEntity) return undefined as ToEntity<T>
 
-      function to<U extends RawEntity>(entity: U): TimestampEntity<U> {
-        const { createdAt, updatedAt, ...others } = entity
-        return {
-          ...others,
-          createdAt: dayjs(createdAt),
-          updatedAt: dayjs(updatedAt),
-        }
-      }
+      const { createdAt, updatedAt, ...others } = rawEntity as RawEntity
+      return {
+        ...others,
+        createdAt: dayjs(createdAt),
+        updatedAt: dayjs(updatedAt),
+      } as ToEntity<T>
+    }
 
-      if (Array.isArray(entity_or_entities)) {
-        const entities = entity_or_entities as RawEntity[]
-        const result: TimestampEntity<RawEntity>[] = []
-        for (const entity of entities) {
-          result.push(to(entity))
-        }
-        return result as ToEntity<T>
-      } else {
-        const entity = entity_or_entities as RawEntity
-        return to(entity) as ToEntity<T>
-      }
+    function toEntities<T extends RawEntity>(rawEntities: T[]): ToEntity<T>[] {
+      return rawEntities.map(rawEntity => toEntity(rawEntity)!)
     }
 
     //----------------------------------------------------------------------
