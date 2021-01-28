@@ -1,9 +1,9 @@
 import { ComputedRef } from '@vue/composition-api'
 import { DeepReadonly } from 'web-base-lib'
-import { TestData } from '@/logic/test-data'
-import { User } from '@/logic/base'
-import { injectInternalLogic } from '@/logic/modules/internal'
-import { injectStore } from '@/logic/store'
+import { TestData } from '@/service/test-data'
+import { User } from '@/service/base'
+import { injectInternalService } from '@/service/modules/internal'
+import { injectStore } from '@/service/store'
 
 //========================================================================
 //
@@ -11,7 +11,7 @@ import { injectStore } from '@/logic/store'
 //
 //========================================================================
 
-interface AuthLogic {
+interface AuthService {
   readonly user: DeepReadonly<User>
 
   readonly isSignedIn: ComputedRef<boolean>
@@ -29,8 +29,8 @@ interface AuthLogic {
 //
 //========================================================================
 
-namespace AuthLogic {
-  export function newInstance(): AuthLogic {
+namespace AuthService {
+  export function newInstance(): AuthService {
     return newRawInstance()
   }
 
@@ -41,7 +41,7 @@ namespace AuthLogic {
     //
     //----------------------------------------------------------------------
 
-    const internal = injectInternalLogic()
+    const internal = injectInternalService()
     const store = injectStore()
 
     //----------------------------------------------------------------------
@@ -50,7 +50,7 @@ namespace AuthLogic {
     //
     //----------------------------------------------------------------------
 
-    const signIn: AuthLogic['signIn'] = async () => {
+    const signIn: AuthService['signIn'] = async () => {
       store.user.set(TestData.user)
       internal.auth.isSignedIn.value = true
 
@@ -61,7 +61,7 @@ namespace AuthLogic {
       localStorage.setItem('idToken', JSON.stringify({ uid: store.user.value.id }))
     }
 
-    const signOut: AuthLogic['signOut'] = async () => {
+    const signOut: AuthService['signOut'] = async () => {
       store.user.clear()
       internal.auth.isSignedIn.value = false
     }
@@ -90,4 +90,4 @@ namespace AuthLogic {
 //
 //========================================================================
 
-export { AuthLogic }
+export { AuthService }

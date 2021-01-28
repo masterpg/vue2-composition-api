@@ -1,6 +1,6 @@
 import Vue from 'vue'
 import VueCompositionApi from '@vue/composition-api'
-import { clearProvidedDependency } from './helpers'
+import { clearProvidedDependency } from './helper'
 import { createI18n } from '@/i18n'
 import { quasar } from '@/quasar'
 import { setupConfig } from '@/config'

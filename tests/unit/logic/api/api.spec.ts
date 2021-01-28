@@ -1,7 +1,7 @@
-import { APIContainer, CartItemEditResponse, RawCartItem, RawProduct } from '@/logic/api'
-import { CartItem, Product } from '@/logic'
+import { APIContainer, CartItemEditResponse, RawCartItem, RawProduct } from '@/service/api'
+import { CartItem, Product } from '@/service'
 import dayjs from 'dayjs'
-import { provideDependency } from '../../../helpers'
+import { provideDependency } from '../../../helper'
 
 //========================================================================
 //

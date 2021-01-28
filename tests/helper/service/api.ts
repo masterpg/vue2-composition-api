@@ -1,4 +1,4 @@
-import { APIContainer } from '@/logic/api'
+import { APIContainer } from '@/service/api'
 
 //========================================================================
 //

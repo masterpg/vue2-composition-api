@@ -1,7 +1,7 @@
 import { ComputedRef, computed, reactive } from '@vue/composition-api'
 import { DeepReadonly } from 'web-base-lib'
-import { Product } from '@/logic/base'
-import { StatePartial } from '@/logic/store/base'
+import { Product } from '@/service/base'
+import { StatePartial } from '@/service/store/base'
 
 //========================================================================
 //

@@ -1,6 +1,6 @@
-import { CartStore } from '@/logic/store/cart'
-import { ProductStore } from '@/logic/store/product'
-import { UserStore } from '@/logic/store/user'
+import { CartStore } from '@/service/store/cart'
+import { ProductStore } from '@/service/store/product'
+import { UserStore } from '@/service/store/user'
 
 //========================================================================
 //
@@ -59,4 +59,4 @@ function injectStore(): StoreContainer {
 //========================================================================
 
 export { StoreContainer, injectStore, provideStore }
-export { generateId } from '@/logic/store/base'
+export { generateId } from '@/service/store/base'

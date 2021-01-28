@@ -6,14 +6,14 @@ import { WritableComputedRef, computed, reactive } from '@vue/composition-api'
 //
 //========================================================================
 
-interface InternalLogic {
-  helper: InternalHelperLogic
-  auth: InternalAuthLogic
+interface InternalService {
+  helper: InternalHelperService
+  auth: InternalAuthService
 }
 
-interface InternalHelperLogic {}
+interface InternalHelperService {}
 
-interface InternalAuthLogic {
+interface InternalAuthService {
   isSignedIn: WritableComputedRef<boolean>
   validateSignedIn(): void
 }
@@ -25,21 +25,21 @@ interface InternalAuthLogic {
 //========================================================================
 
 //--------------------------------------------------
-//  InternalHelperLogic
+//  InternalHelperService
 //--------------------------------------------------
 
-namespace InternalHelperLogic {
-  export function newInstance(): InternalHelperLogic {
+namespace InternalHelperService {
+  export function newInstance(): InternalHelperService {
     return {}
   }
 }
 
 //--------------------------------------------------
-//  InternalAuthLogic
+//  InternalAuthService
 //--------------------------------------------------
 
-namespace InternalAuthLogic {
-  export function newInstance(): InternalAuthLogic {
+namespace InternalAuthService {
+  export function newInstance(): InternalAuthService {
     const state = reactive({
       isSignedIn: false,
     })
@@ -49,7 +49,7 @@ namespace InternalAuthLogic {
       set: value => (state.isSignedIn = value),
     })
 
-    const validateSignedIn: InternalAuthLogic['validateSignedIn'] = () => {
+    const validateSignedIn: InternalAuthService['validateSignedIn'] = () => {
       if (!state.isSignedIn) {
         throw new Error(`The application is not yet signed in.`)
       }
@@ -63,17 +63,17 @@ namespace InternalAuthLogic {
 }
 
 //--------------------------------------------------
-//  InternalLogic
+//  InternalService
 //--------------------------------------------------
 
-namespace InternalLogic {
-  export function newInstance(): InternalLogic {
+namespace InternalService {
+  export function newInstance(): InternalService {
     return newRawInstance()
   }
 
-  export function newRawInstance(options?: { helper?: InternalHelperLogic; auth?: InternalAuthLogic }) {
-    const helper = options?.helper ?? InternalHelperLogic.newInstance()
-    const auth = options?.auth ?? InternalAuthLogic.newInstance()
+  export function newRawInstance(options?: { helper?: InternalHelperService; auth?: InternalAuthService }) {
+    const helper = options?.helper ?? InternalHelperService.newInstance()
+    const auth = options?.auth ?? InternalAuthService.newInstance()
 
     return {
       helper,
@@ -88,15 +88,15 @@ namespace InternalLogic {
 //
 //========================================================================
 
-let instance: InternalLogic
+let instance: InternalService
 
-function provideInternalLogic(internal: InternalLogic): void {
+function provideInternalService(internal: InternalService): void {
   instance = internal
 }
 
-function injectInternalLogic(): InternalLogic {
+function injectInternalService(): InternalService {
   if (!instance) {
-    throw new Error(`'InternalLogic' is not provided`)
+    throw new Error(`'InternalService' is not provided`)
   }
   return instance
 }
@@ -107,4 +107,4 @@ function injectInternalLogic(): InternalLogic {
 //
 //========================================================================
 
-export { InternalAuthLogic, InternalHelperLogic, InternalLogic, injectInternalLogic, provideInternalLogic }
+export { InternalAuthService, InternalHelperService, InternalService, injectInternalService, provideInternalService }

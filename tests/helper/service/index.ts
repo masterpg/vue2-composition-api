@@ -1,5 +1,5 @@
-import { Entity, LogicContainer } from '@/logic'
-import { InternalLogic } from '@/logic/modules/internal'
+import { Entity, ServiceContainer } from '@/service'
+import { InternalService } from '@/service/modules/internal'
 import { TestAPIContainer } from './api'
 import { TestStoreContainer } from './store'
 
@@ -9,12 +9,12 @@ import { TestStoreContainer } from './store'
 //
 //========================================================================
 
-interface TestLogicContainer extends LogicContainer {}
+interface TestServiceContainer extends ServiceContainer {}
 
-interface TestLogicDependency {
+interface TestServiceDependency {
   api: TestAPIContainer
   store: TestStoreContainer
-  internal: InternalLogic
+  internal: InternalService
 }
 
 //========================================================================
@@ -23,14 +23,14 @@ interface TestLogicDependency {
 //
 //========================================================================
 
-namespace TestLogicContainer {
-  export function newInstance(): TestLogicContainer & { readonly dependency: TestLogicDependency } {
+namespace TestServiceContainer {
+  export function newInstance(): TestServiceContainer & { readonly dependency: TestServiceDependency } {
     const api = TestAPIContainer.newInstance()
     const store = TestStoreContainer.newInstance()
-    const internal = InternalLogic.newInstance()
+    const internal = InternalService.newInstance()
     const dependency = { api, store, internal }
 
-    const base = LogicContainer.newRawInstance(dependency)
+    const base = ServiceContainer.newRawInstance(dependency)
 
     return {
       ...base,
@@ -62,6 +62,6 @@ function expectNotToBeCopyEntity<T extends Entity>(actual: T | T[], expected: T 
 //
 //========================================================================
 
-export { TestLogicContainer, expectNotToBeCopyEntity }
+export { TestServiceContainer, expectNotToBeCopyEntity }
 export * from './api'
 export * from './store'

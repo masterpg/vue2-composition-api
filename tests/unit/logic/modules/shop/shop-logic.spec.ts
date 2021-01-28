@@ -1,10 +1,10 @@
-import { APIContainer, CartItemEditResponse } from '@/logic/api'
-import { CartItem, Product } from '@/logic'
-import { provideDependency, toBeCopyCartItem, toBeCopyProduct } from '../../../../helpers'
-import { InternalAuthLogic } from '@/logic/modules/internal'
-import { ShopLogic } from '@/logic/modules/shop'
+import { APIContainer, CartItemEditResponse } from '@/service/api'
+import { CartItem, Product } from '@/service'
+import { provideDependency, toBeCopyCartItem, toBeCopyProduct } from '../../../../helper'
+import { InternalAuthService } from '@/service/modules/internal'
+import { ShopService } from '@/service/modules/shop'
 import dayjs from 'dayjs'
-import { generateId } from '@/logic/store'
+import { generateId } from '@/service/store'
 
 //========================================================================
 //
@@ -48,16 +48,16 @@ const CART_ITEMS: CartItem[] = [
 //
 //========================================================================
 
-describe('ShopLogic', () => {
+describe('ShopService', () => {
   it('fetchProducts', async () => {
-    const { store, logic } = provideDependency(({ api }) => {
+    const { store, service } = provideDependency(({ api }) => {
       // モック設定
       const getProducts = td.replace<APIContainer, 'getProducts'>(api, 'getProducts')
       td.when(getProducts()).thenResolve(PRODUCTS)
     })
 
     // テスト対象実行
-    const actual = await logic.shop.fetchProducts()
+    const actual = await service.shop.fetchProducts()
 
     expect(actual).toEqual(PRODUCTS)
     expect(store.product.all.value).toEqual(PRODUCTS)
@@ -66,15 +66,15 @@ describe('ShopLogic', () => {
 
   describe('fetchCartItems', () => {
     it('ベーシックケース', async () => {
-      const { store, internal, logic } = provideDependency(({ api, internal }) => {
+      const { store, internal, service } = provideDependency(({ api, internal }) => {
         // モック設定
-        td.replace<InternalAuthLogic, 'validateSignedIn'>(internal.auth, 'validateSignedIn')
+        td.replace<InternalAuthService, 'validateSignedIn'>(internal.auth, 'validateSignedIn')
         const getCartItems = td.replace<APIContainer, 'getCartItems'>(api, 'getCartItems')
         td.when(getCartItems()).thenResolve(CART_ITEMS)
       })
 
       // テスト対象実行
-      const actual = await logic.shop.fetchCartItems()
+      const actual = await service.shop.fetchCartItems()
 
       expect(actual).toEqual(CART_ITEMS)
       expect(store.cart.all.value).toEqual(CART_ITEMS)
@@ -87,7 +87,7 @@ describe('ShopLogic', () => {
     })
 
     it('APIでエラーが発生した場合', async () => {
-      const { store, logic } = provideDependency(({ api, internal }) => {
+      const { store, service } = provideDependency(({ api, internal }) => {
         // モック設定
         const getCartItems = td.replace<APIContainer, 'getCartItems'>(api, 'getCartItems')
         td.when(getCartItems()).thenReject(new Error())
@@ -96,7 +96,7 @@ describe('ShopLogic', () => {
       let actual!: Error
       try {
         // テスト対象実行
-        await logic.shop.fetchCartItems()
+        await service.shop.fetchCartItems()
       } catch (err) {
         actual = err
       }
@@ -129,17 +129,17 @@ describe('ShopLogic', () => {
         },
       }
 
-      const { api, store, internal, logic } = provideDependency(({ api, store, internal }) => {
+      const { api, store, internal, service } = provideDependency(({ api, store, internal }) => {
         // ストア設定
         store.product.setAll(products)
         // モック設定
-        td.replace<InternalAuthLogic, 'validateSignedIn'>(internal.auth, 'validateSignedIn')
+        td.replace<InternalAuthService, 'validateSignedIn'>(internal.auth, 'validateSignedIn')
         const addCartItems = td.replace<APIContainer, 'addCartItems'>(api, 'addCartItems')
         td.when(addCartItems(td.matchers.anything())).thenResolve([response])
       })
 
       // テスト対象実行
-      await logic.shop.addItemToCart(response.product.id)
+      await service.shop.addItemToCart(response.product.id)
 
       // APIが適切な引数でコールされたか検証
       td.verify(
@@ -182,18 +182,18 @@ describe('ShopLogic', () => {
         },
       }
 
-      const { api, store, internal, logic } = provideDependency(({ api, store, internal }) => {
+      const { api, store, internal, service } = provideDependency(({ api, store, internal }) => {
         // ストア設定
         store.product.setAll(products)
         store.cart.setAll(CART_ITEMS)
         // モック設定
-        td.replace<InternalAuthLogic, 'validateSignedIn'>(internal.auth, 'validateSignedIn')
+        td.replace<InternalAuthService, 'validateSignedIn'>(internal.auth, 'validateSignedIn')
         const updateCartItems = td.replace<APIContainer, 'updateCartItems'>(api, 'updateCartItems')
         td.when(updateCartItems(td.matchers.anything())).thenResolve([response])
       })
 
       // テスト対象実行
-      await logic.shop.addItemToCart(response.product.id)
+      await service.shop.addItemToCart(response.product.id)
 
       // APIが適切な引数でコールされたか検証
       td.verify(
@@ -223,11 +223,11 @@ describe('ShopLogic', () => {
       // 現在の商品の在庫数を設定
       product1.stock = 0
 
-      const { store, logic } = provideDependency(({ api, store, internal }) => {
+      const { store, service } = provideDependency(({ api, store, internal }) => {
         // ストア設定
         store.product.setAll(products)
         // モック設定
-        td.replace<InternalAuthLogic, 'validateSignedIn'>(internal.auth, 'validateSignedIn')
+        td.replace<InternalAuthService, 'validateSignedIn'>(internal.auth, 'validateSignedIn')
         const addCartItems = td.replace<APIContainer, 'addCartItems'>(api, 'addCartItems')
         td.when(addCartItems(td.matchers.anything())).thenReject(new Error())
       })
@@ -235,7 +235,7 @@ describe('ShopLogic', () => {
       let actual!: Error
       try {
         // テスト対象実行
-        await logic.shop.addItemToCart(product1.id)
+        await service.shop.addItemToCart(product1.id)
       } catch (err) {
         actual = err
       }
@@ -249,11 +249,11 @@ describe('ShopLogic', () => {
     it('APIでエラーが発生した場合', async () => {
       const product1 = PRODUCTS[0]
 
-      const { store, logic } = provideDependency(({ api, store, internal }) => {
+      const { store, service } = provideDependency(({ api, store, internal }) => {
         // ストア設定
         store.product.setAll(PRODUCTS)
         // モック設定
-        td.replace<InternalAuthLogic, 'validateSignedIn'>(internal.auth, 'validateSignedIn')
+        td.replace<InternalAuthService, 'validateSignedIn'>(internal.auth, 'validateSignedIn')
         const addCartItems = td.replace<APIContainer, 'addCartItems'>(api, 'addCartItems')
         td.when(addCartItems(td.matchers.anything())).thenReject(new Error())
       })
@@ -261,7 +261,7 @@ describe('ShopLogic', () => {
       let actual!: Error
       try {
         // テスト対象実行
-        await logic.shop.addItemToCart(product1.id)
+        await service.shop.addItemToCart(product1.id)
       } catch (err) {
         actual = err
       }
@@ -294,18 +294,18 @@ describe('ShopLogic', () => {
         },
       }
 
-      const { api, store, internal, logic } = provideDependency(({ api, store, internal }) => {
+      const { api, store, internal, service } = provideDependency(({ api, store, internal }) => {
         // ストア設定
         store.product.setAll(products)
         store.cart.setAll(cartItems)
         // モック設定
-        td.replace<InternalAuthLogic, 'validateSignedIn'>(internal.auth, 'validateSignedIn')
+        td.replace<InternalAuthService, 'validateSignedIn'>(internal.auth, 'validateSignedIn')
         const updateCartItems = td.replace<APIContainer, 'updateCartItems'>(api, 'updateCartItems')
         td.when(updateCartItems(td.matchers.anything())).thenResolve([response])
       })
 
       // テスト対象実行
-      await logic.shop.removeItemFromCart(response.product.id)
+      await service.shop.removeItemFromCart(response.product.id)
 
       // APIが適切な引数でコールされたか検証
       td.verify(
@@ -349,18 +349,18 @@ describe('ShopLogic', () => {
         },
       }
 
-      const { api, store, internal, logic } = provideDependency(({ api, store, internal }) => {
+      const { api, store, internal, service } = provideDependency(({ api, store, internal }) => {
         // ストア設定
         store.product.setAll(products)
         store.cart.setAll(cartItems)
         // モック設定
-        td.replace<InternalAuthLogic, 'validateSignedIn'>(internal.auth, 'validateSignedIn')
+        td.replace<InternalAuthService, 'validateSignedIn'>(internal.auth, 'validateSignedIn')
         const removeCartItems = td.replace<APIContainer, 'removeCartItems'>(api, 'removeCartItems')
         td.when(removeCartItems(td.matchers.anything())).thenResolve([response])
       })
 
       // テスト対象実行
-      await logic.shop.removeItemFromCart(response.product.id)
+      await service.shop.removeItemFromCart(response.product.id)
 
       // APIが適切な引数でコールされたか検証
       td.verify(api.removeCartItems([response.id]))
@@ -384,12 +384,12 @@ describe('ShopLogic', () => {
       const cartItem1 = cartItems[0]
       cartItem1.quantity = 1
 
-      const { store, logic } = provideDependency(({ api, store, internal }) => {
+      const { store, service } = provideDependency(({ api, store, internal }) => {
         // ストア設定
         store.product.setAll(PRODUCTS)
         store.cart.setAll(cartItems)
         // モック設定
-        td.replace<InternalAuthLogic, 'validateSignedIn'>(internal.auth, 'validateSignedIn')
+        td.replace<InternalAuthService, 'validateSignedIn'>(internal.auth, 'validateSignedIn')
         const removeCartItems = td.replace<APIContainer, 'removeCartItems'>(api, 'removeCartItems')
         td.when(removeCartItems(td.matchers.anything())).thenReject(new Error())
       })
@@ -397,7 +397,7 @@ describe('ShopLogic', () => {
       let actual!: Error
       try {
         // テスト対象実行
-        await logic.shop.removeItemFromCart(product1.id)
+        await service.shop.removeItemFromCart(product1.id)
       } catch (err) {
         actual = err
       }
@@ -411,31 +411,31 @@ describe('ShopLogic', () => {
 
   describe('checkout', () => {
     it('ベーシックケース', async () => {
-      const { api, logic } = provideDependency(({ api, store, internal }) => {
+      const { api, service } = provideDependency(({ api, store, internal }) => {
         // ストア設定
         store.product.setAll(PRODUCTS)
         store.cart.setAll(CART_ITEMS)
         // モック設定
-        td.replace<InternalAuthLogic, 'validateSignedIn'>(internal.auth, 'validateSignedIn')
+        td.replace<InternalAuthService, 'validateSignedIn'>(internal.auth, 'validateSignedIn')
         const checkoutCart = td.replace<APIContainer, 'checkoutCart'>(api, 'checkoutCart')
         td.when(checkoutCart()).thenResolve(true)
       })
 
       // テスト対象の実行
-      await logic.shop.checkout()
+      await service.shop.checkout()
 
       td.verify(api.checkoutCart())
-      expect(logic.shop.cartItems.value.length).toBe(0)
-      expect(logic.shop.products.value).toEqual(PRODUCTS)
+      expect(service.shop.cartItems.value.length).toBe(0)
+      expect(service.shop.products.value).toEqual(PRODUCTS)
     })
 
     it('APIでエラーが発生した場合', async () => {
-      const { store, logic } = provideDependency(({ api, store, internal }) => {
+      const { store, service } = provideDependency(({ api, store, internal }) => {
         // ストア設定
         store.product.setAll(PRODUCTS)
         store.cart.setAll(CART_ITEMS)
         // モック設定
-        td.replace<InternalAuthLogic, 'validateSignedIn'>(internal.auth, 'validateSignedIn')
+        td.replace<InternalAuthService, 'validateSignedIn'>(internal.auth, 'validateSignedIn')
         const checkoutCart = td.replace<APIContainer, 'checkoutCart'>(api, 'checkoutCart')
         td.when(checkoutCart()).thenReject(new Error())
       })
@@ -443,7 +443,7 @@ describe('ShopLogic', () => {
       let actual!: Error
       try {
         // テスト対象実行
-        await logic.shop.checkout()
+        await service.shop.checkout()
       } catch (err) {
         actual = err
       }

@@ -1,9 +1,9 @@
-import { CartItem, Product } from '@/logic/base'
+import { CartItem, Product } from '@/service/base'
 import { ComputedRef, watch } from '@vue/composition-api'
 import { DeepReadonly } from 'web-base-lib'
-import { injectAPI } from '@/logic/api'
-import { injectInternalLogic } from '@/logic/modules/internal'
-import { injectStore } from '@/logic/store'
+import { injectAPI } from '@/service/api'
+import { injectInternalService } from '@/service/modules/internal'
+import { injectStore } from '@/service/store'
 
 //========================================================================
 //
@@ -11,7 +11,7 @@ import { injectStore } from '@/logic/store'
 //
 //========================================================================
 
-interface ShopLogic {
+interface ShopService {
   readonly products: ComputedRef<DeepReadonly<Product>[]>
 
   readonly cartItems: ComputedRef<DeepReadonly<CartItem>[]>
@@ -35,8 +35,8 @@ interface ShopLogic {
 //
 //========================================================================
 
-namespace ShopLogic {
-  export function newInstance(): ShopLogic {
+namespace ShopService {
+  export function newInstance(): ShopService {
     return newRawInstance()
   }
 
@@ -48,7 +48,7 @@ namespace ShopLogic {
     //----------------------------------------------------------------------
 
     const api = injectAPI()
-    const internal = injectInternalLogic()
+    const internal = injectInternalService()
     const store = injectStore()
 
     //----------------------------------------------------------------------
@@ -57,13 +57,13 @@ namespace ShopLogic {
     //
     //----------------------------------------------------------------------
 
-    const fetchProducts: ShopLogic['fetchProducts'] = async () => {
+    const fetchProducts: ShopService['fetchProducts'] = async () => {
       const products = await api.getProducts()
       store.product.setAll(products)
       return Product.clone(store.product.all.value)
     }
 
-    const fetchCartItems: ShopLogic['fetchCartItems'] = async () => {
+    const fetchCartItems: ShopService['fetchCartItems'] = async () => {
       internal.auth.validateSignedIn()
 
       const cartItems = await api.getCartItems()
@@ -71,7 +71,7 @@ namespace ShopLogic {
       return CartItem.clone(store.cart.all.value)
     }
 
-    const addItemToCart: ShopLogic['addItemToCart'] = async productId => {
+    const addItemToCart: ShopService['addItemToCart'] = async productId => {
       internal.auth.validateSignedIn()
 
       const product = store.product.sgetById(productId)
@@ -87,7 +87,7 @@ namespace ShopLogic {
       }
     }
 
-    const removeItemFromCart: ShopLogic['removeItemFromCart'] = async productId => {
+    const removeItemFromCart: ShopService['removeItemFromCart'] = async productId => {
       internal.auth.validateSignedIn()
 
       const cartItem = store.cart.sgetByProductId(productId)
@@ -98,7 +98,7 @@ namespace ShopLogic {
       }
     }
 
-    const checkout: ShopLogic['checkout'] = async () => {
+    const checkout: ShopService['checkout'] = async () => {
       internal.auth.validateSignedIn()
 
       await api.checkoutCart()
@@ -194,4 +194,4 @@ namespace ShopLogic {
 //
 //========================================================================
 
-export { ShopLogic }
+export { ShopService }

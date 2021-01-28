@@ -1,6 +1,6 @@
-import { User } from '@/logic'
+import { User } from '@/service'
 import dayjs from 'dayjs'
-import { provideDependency } from '../../../../helpers'
+import { provideDependency } from '../../../../helper'
 
 //========================================================================
 //

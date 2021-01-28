@@ -62,7 +62,7 @@
 
 <script lang="ts">
 import { defineComponent, reactive, ref } from '@vue/composition-api'
-import { injectLogic, provideLogic } from '@/logic'
+import { injectService, provideService } from '@/service'
 import { injectServiceWorker, provideServiceWorker } from '@/service-worker'
 import { Dialogs } from '@/dialogs'
 import { Notify } from 'quasar'
@@ -82,10 +82,10 @@ export default defineComponent({
     //
     //----------------------------------------------------------------------
 
-    provideLogic()
+    provideService()
     provideServiceWorker()
 
-    const logic = injectLogic()
+    const service = injectService()
     const serviceWorker = injectServiceWorker()
     const { t } = useI18n()
 
@@ -114,9 +114,9 @@ export default defineComponent({
         },
       ] as { title: string; path: string }[],
 
-      isSignedIn: logic.auth.isSignedIn,
+      isSignedIn: service.auth.isSignedIn,
 
-      user: logic.auth.user,
+      user: service.auth.user,
     })
 
     //----------------------------------------------------------------------
@@ -126,11 +126,11 @@ export default defineComponent({
     //----------------------------------------------------------------------
 
     function signInMenuItemOnClick() {
-      logic.auth.signIn()
+      service.auth.signIn()
     }
 
     function signOutMenuItemOnClick() {
-      logic.auth.signOut()
+      service.auth.signOut()
     }
 
     serviceWorker.addStateChangeListener(info => {

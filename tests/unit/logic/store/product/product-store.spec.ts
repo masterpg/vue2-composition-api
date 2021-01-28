@@ -1,7 +1,7 @@
-import { provideDependency, toBeCopyProduct } from '../../../../helpers'
-import { Product } from '@/logic'
+import { provideDependency, toBeCopyProduct } from '../../../../helper'
+import { Product } from '@/service'
 import dayjs from 'dayjs'
-import { generateId } from '@/logic/store'
+import { generateId } from '@/service/store'
 
 //========================================================================
 //

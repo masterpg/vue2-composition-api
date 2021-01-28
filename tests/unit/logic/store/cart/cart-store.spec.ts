@@ -1,7 +1,7 @@
-import { provideDependency, toBeCopyCartItem } from '../../../../helpers'
-import { CartItem } from '@/logic'
+import { provideDependency, toBeCopyCartItem } from '../../../../helper'
+import { CartItem } from '@/service'
 import dayjs from 'dayjs'
-import { generateId } from '@/logic/store'
+import { generateId } from '@/service/store'
 
 //========================================================================
 //

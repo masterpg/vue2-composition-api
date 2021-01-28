@@ -1,5 +1,5 @@
 import { DeepReadonly } from 'web-base-lib'
-import { User } from '@/logic/base'
+import { User } from '@/service/base'
 import dayjs from 'dayjs'
 import { reactive } from '@vue/composition-api'
 

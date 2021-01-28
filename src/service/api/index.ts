@@ -1,5 +1,5 @@
-import { CartItem, Entity, OmitEntityTimestamp, Product, TimestampEntity } from '@/logic'
-import { APIClient } from '@/logic/api/client'
+import { CartItem, Entity, OmitEntityTimestamp, Product, TimestampEntity } from '@/service'
+import { APIClient } from '@/service/api/client'
 import dayjs from 'dayjs'
 
 //========================================================================

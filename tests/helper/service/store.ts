@@ -1,9 +1,9 @@
-import { CartItem, Product } from '@/logic'
-import { CartStore } from '@/logic/store/cart'
+import { CartItem, Product } from '@/service'
+import { CartStore } from '@/service/store/cart'
 import { DeepReadonly } from 'web-base-lib'
-import { ProductStore } from '@/logic/store/product'
-import { StoreContainer } from '@/logic/store'
-import { UserStore } from '@/logic/store/user'
+import { ProductStore } from '@/service/store/product'
+import { StoreContainer } from '@/service/store'
+import { UserStore } from '@/service/store/user'
 
 //========================================================================
 //

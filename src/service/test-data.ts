@@ -1,4 +1,4 @@
-import { User } from '@/logic/base'
+import { User } from '@/service/base'
 import dayjs from 'dayjs'
 
 namespace TestData {

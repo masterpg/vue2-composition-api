@@ -1,8 +1,8 @@
 import { DeepPartial, DeepReadonly } from 'web-base-lib'
 import dayjs, { Dayjs } from 'dayjs'
-import { APIContainer } from '@/logic/api'
-import { InternalLogic } from '@/logic/modules/internal'
-import { StoreContainer } from '@/logic/store'
+import { APIContainer } from '@/service/api'
+import { InternalService } from '@/service/modules/internal'
+import { StoreContainer } from '@/service/store'
 
 //========================================================================
 //
@@ -22,10 +22,10 @@ type TimestampEntity<T = unknown> = Entity &
     updatedAt: Dayjs
   }
 
-interface LogicDependency {
+interface ServiceDependency {
   api: APIContainer
   store: StoreContainer
-  internal: InternalLogic
+  internal: InternalService
 }
 
 interface User extends TimestampEntity {
@@ -122,4 +122,4 @@ namespace CartItem {
 //
 //========================================================================
 
-export { CartItem, Entity, LogicDependency, OmitEntityTimestamp, Product, TimestampEntity, User }
+export { CartItem, Entity, ServiceDependency, OmitEntityTimestamp, Product, TimestampEntity, User }
